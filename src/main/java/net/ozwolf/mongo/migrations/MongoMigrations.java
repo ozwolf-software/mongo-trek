@@ -88,6 +88,11 @@ public class MongoMigrations {
      */
     public void migrate(Collection<MigrationCommand> commands) throws MongoMigrationsFailureException {
         LOGGER.info("DATABASE MIGRATIONS");
+        if (commands.isEmpty()) {
+            LOGGER.info("   No migrations to apply.");
+            return;
+        }
+        
         DateTime start = DateTime.now();
         AtomicInteger successfulCount = new AtomicInteger(0);
         try {
