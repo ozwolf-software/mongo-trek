@@ -38,7 +38,7 @@ public class MyFirstMigration implements MigrationCommand {
 
 ### Running Your Migrations
 
-This tool is meant to be run as part of your application's startup process (similar in theme to the (Flyway)[http://flywaydb.org] toolset for MySQL in Java).  First, create a Mongo DB object that is a connection to your schema then create a `MongoMigrations` instance.  Finally, pass in your initialized command objects to the `migrate` command.
+This tool is meant to be run as part of your application's startup process (similar in theme to the [Flyway](http://flywaydb.org) toolset for MySQL in Java).  First, create a Mongo DB object that is a connection to your schema then create a `MongoMigrations` instance.  Finally, pass in your initialized command objects to the `migrate` command.
   
 Commands passed to the `MongoMigrations` object must be instantiated.  This approach has been taken to allow you to define _how_ you instantiate your commands yourself (ie. Spring, Guice, etc.)
 
@@ -84,3 +84,4 @@ Messages are logged via the following levels:
 + [Jongo](http://jongo.org)
 + [Fongo](https://github.com/foursquare/fongo)
 + [LOGBack](http://logback.qos.ch)
++ [Flyway](http://flywaydb.org) _for inspiration_
