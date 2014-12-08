@@ -6,6 +6,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.github.fakemongo.Fongo;
 import com.googlecode.totallylazy.Sequence;
+import com.googlecode.totallylazy.Sequences;
 import com.mongodb.DB;
 import net.ozwolf.mongo.migrations.exception.MongoMigrationsFailureException;
 import net.ozwolf.mongo.migrations.internal.domain.Migration;
@@ -104,6 +105,20 @@ public class MongoMigrationsIntegrationTest {
         assertThat(events, hasItem(loggedMessage("       1.0.2 : Failed last time migration")));
         assertThat(events, hasItem(loggedMessage("       2.0.0 : Brand new migration")));
         assertThat(events, hasItem(loggedMessage(">>> [ 2 ] migrations applied in [ 0 seconds ] <<<")));
+    }
+
+    @Test
+    public void shouldHandleZeroCommandsProvided() throws MongoMigrationsFailureException {
+        MongoMigrations migrations = new MongoMigrations(DATABASE);
+        migrations.setSchemaVersionCollection(SCHEMA_VERSION_COLLECTION);
+        migrations.migrate(Sequences.<MigrationCommand>sequence());
+
+        verify(appender, atLeastOnce()).doAppend(captor.capture());
+
+        List<ILoggingEvent> events = captor.getAllValues();
+
+        assertThat(events, hasItem(loggedMessage("DATABASE MIGRATIONS")));
+        assertThat(events, hasItem(loggedMessage("   No migrations to apply.")));
     }
 
     @SuppressWarnings("unchecked")
