@@ -3,13 +3,12 @@ package net.ozwolf.mongo.migrations.internal.dao;
 import com.googlecode.totallylazy.Option;
 import com.googlecode.totallylazy.Sequence;
 import net.ozwolf.mongo.migrations.internal.domain.Migration;
+import net.ozwolf.mongo.migrations.internal.domain.MigrationStatus;
 import org.jongo.Jongo;
 
 import static com.googlecode.totallylazy.Option.none;
 import static com.googlecode.totallylazy.Option.option;
 import static com.googlecode.totallylazy.Sequences.sequence;
-import static net.ozwolf.mongo.migrations.internal.domain.Migration.Helpers.getVersion;
-import static net.ozwolf.mongo.migrations.internal.domain.Migration.Helpers.successfulyOnly;
 
 public class DefaultSchemaVersionDAO implements SchemaVersionDAO {
     private final Jongo jongo;
@@ -33,8 +32,8 @@ public class DefaultSchemaVersionDAO implements SchemaVersionDAO {
     @Override
     public Option<Migration> findLastSuccessful() {
         Sequence<Migration> migrations = this.findAll()
-                .filter(successfulyOnly())
-                .sortBy(getVersion());
+                .filter(m -> m.getStatus() == MigrationStatus.Successful)
+                .sortBy(Migration::getVersion);
         return migrations.isEmpty() ? none(Migration.class) : option(migrations.last());
     }
 

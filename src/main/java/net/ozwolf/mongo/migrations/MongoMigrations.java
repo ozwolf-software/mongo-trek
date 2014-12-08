@@ -7,7 +7,7 @@ import net.ozwolf.mongo.migrations.exception.MongoMigrationsFailureException;
 import net.ozwolf.mongo.migrations.internal.dao.DefaultSchemaVersionDAO;
 import net.ozwolf.mongo.migrations.internal.dao.SchemaVersionDAO;
 import net.ozwolf.mongo.migrations.internal.domain.Migration;
-import net.ozwolf.mongo.migrations.internal.factory.MigrationsService;
+import net.ozwolf.mongo.migrations.internal.service.MigrationsService;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 import org.jongo.Jongo;

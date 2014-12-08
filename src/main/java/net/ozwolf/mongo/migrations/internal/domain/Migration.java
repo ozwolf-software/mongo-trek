@@ -11,12 +11,11 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.googlecode.totallylazy.Callable1;
 import com.googlecode.totallylazy.Option;
-import com.googlecode.totallylazy.Predicate;
 import net.ozwolf.mongo.migrations.MigrationCommand;
 import net.ozwolf.mongo.migrations.MongoMigration;
 import org.apache.commons.lang.StringUtils;
+import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
@@ -73,18 +72,12 @@ public class Migration {
         return version;
     }
 
+    public ComparableVersion getComparableVersion() {
+        return new ComparableVersion(version);
+    }
+
     public String getDescription() {
         return description;
-    }
-
-    public String getStarted() {
-        if (started == null) return "";
-        return started.toDateTime(DateTimeZone.getDefault()).toString("yyyy-MM-dd HH:mm:ss");
-    }
-
-    public String getFinished() {
-        if (finished == null) return "";
-        return finished.toDateTime(DateTimeZone.getDefault()).toString("yyyy-MM-dd HH:mm:ss");
     }
 
     public String getDuration() {
@@ -126,15 +119,6 @@ public class Migration {
         return this;
     }
 
-    public static Predicate<Migration> forVersion(final String version) {
-        return new Predicate<Migration>() {
-            @Override
-            public boolean matches(Migration record) {
-                return record.getVersion().equals(version);
-            }
-        };
-    }
-
     public String getTags() {
         List<String> tags = new ArrayList<>();
         tags.add(String.format("[ %s ]", status.name()));
@@ -147,35 +131,6 @@ public class Migration {
         if (this.status == MigrationStatus.Failed)
             tags.add(String.format("[ ERROR: %s ]", failureMessage));
         return StringUtils.join(tags, " ");
-    }
-
-    public static class Helpers {
-        public static Predicate<Migration> successfulyOnly() {
-            return new Predicate<Migration>() {
-                @Override
-                public boolean matches(Migration migration) {
-                    return migration.getStatus() == MigrationStatus.Successful;
-                }
-            };
-        }
-
-        public static Predicate<Migration> notSuccessful() {
-            return new Predicate<Migration>() {
-                @Override
-                public boolean matches(Migration migration) {
-                    return migration.getStatus() != MigrationStatus.Successful;
-                }
-            };
-        }
-
-        public static Callable1<Migration, String> getVersion() {
-            return new Callable1<Migration, String>() {
-                @Override
-                public String call(Migration migration) throws Exception {
-                    return migration.getVersion();
-                }
-            };
-        }
     }
 
     public static class DateTimeSerializer extends JsonSerializer<DateTime> {

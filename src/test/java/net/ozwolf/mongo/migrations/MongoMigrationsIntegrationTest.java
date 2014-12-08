@@ -7,7 +7,6 @@ import ch.qos.logback.core.Appender;
 import com.github.fakemongo.Fongo;
 import com.googlecode.totallylazy.Sequence;
 import com.mongodb.DB;
-import com.mongodb.DBObject;
 import net.ozwolf.mongo.migrations.exception.MongoMigrationsFailureException;
 import net.ozwolf.mongo.migrations.internal.domain.Migration;
 import net.ozwolf.mongo.migrations.internal.domain.MigrationStatus;
@@ -15,7 +14,6 @@ import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
 import org.joda.time.DateTime;
 import org.jongo.Jongo;
-import org.jongo.ResultHandler;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -90,8 +88,8 @@ public class MongoMigrationsIntegrationTest {
                 migrationOf("2.0.0", MigrationStatus.Successful)
         );
 
-        assertThat(JONGO.getCollection("first_migrations").findOne("{'name':'Homer Simpson'}").map(ageMapper()), is(37));
-        assertThat(JONGO.getCollection("second_migrations").findOne("{'town':'Shelbyville'}").map(countryMapper()), is("United States"));
+        assertThat(JONGO.getCollection("first_migrations").findOne("{'name':'Homer Simpson'}").map(r -> (Integer) r.get("age")), is(37));
+        assertThat(JONGO.getCollection("second_migrations").findOne("{'town':'Shelbyville'}").map(r -> (String) r.get("country")), is("United States"));
 
         verify(appender, atLeastOnce()).doAppend(captor.capture());
 
@@ -140,8 +138,8 @@ public class MongoMigrationsIntegrationTest {
                     migrationOf("2.0.0.1", MigrationStatus.Failed)
             );
 
-            assertThat(JONGO.getCollection("first_migrations").findOne("{'name':'Homer Simpson'}").map(ageMapper()), is(37));
-            assertThat(JONGO.getCollection("second_migrations").findOne("{'town':'Shelbyville'}").map(countryMapper()), is("United States"));
+            assertThat(JONGO.getCollection("first_migrations").findOne("{'name':'Homer Simpson'}").map(r -> (Integer) r.get("age")), is(37));
+            assertThat(JONGO.getCollection("second_migrations").findOne("{'town':'Shelbyville'}").map(r -> (String) r.get("country")), is("United States"));
 
             verify(appender, atLeastOnce()).doAppend(captor.capture());
 
@@ -255,24 +253,6 @@ public class MongoMigrationsIntegrationTest {
             @Override
             public void describeTo(Description description) {
                 description.appendText(String.format("version = <%s>, status = <%s>", version, status));
-            }
-        };
-    }
-
-    private static ResultHandler<Integer> ageMapper() {
-        return new ResultHandler<Integer>() {
-            @Override
-            public Integer map(DBObject result) {
-                return (Integer) result.get("age");
-            }
-        };
-    }
-
-    private static ResultHandler<String> countryMapper() {
-        return new ResultHandler<String>() {
-            @Override
-            public String map(DBObject result) {
-                return (String) result.get("country");
             }
         };
     }

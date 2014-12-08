@@ -6,12 +6,12 @@
 
     <groupId>net.ozwolf</groupId>
     <artifactId>java-mongo-migrations</artifactId>
-    <version>1.0.0</version>
-    <name>Java Mongo Migrations</name>
+    <version>1.8.1</version>
+    <name>Java Mongo Migrations (Java 1.8)</name>
     <description>Mongo migrations tool that allows in-code migrations via the Jongo library.</description>
 
     <properties>
-        <compile.version>1.7</compile.version>
+        <compile.version>1.8</compile.version>
 
         <!-- Runtime Libraries -->
         <mongo.version>2.12.4</mongo.version>
@@ -19,7 +19,7 @@
         <logback.version>1.1.2</logback.version>
         <joda.time.version>2.6</joda.time.version>
         <commons.lang.version>2.6</commons.lang.version>
-        <totallylazy.version>1190</totallylazy.version>
+        <totallylazy.version>2.85</totallylazy.version>
         <maven.artifact.version>3.0.4</maven.artifact.version>
 
         <!-- Testing Libraries -->

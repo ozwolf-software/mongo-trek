@@ -1,4 +1,4 @@
-package net.ozwolf.mongo.migrations.internal.factory;
+package net.ozwolf.mongo.migrations.internal.service;
 
 import com.googlecode.totallylazy.Sequence;
 import com.googlecode.totallylazy.Sequences;
@@ -9,6 +9,7 @@ import net.ozwolf.mongo.migrations.exception.MissingAnnotationException;
 import net.ozwolf.mongo.migrations.internal.dao.SchemaVersionDAO;
 import net.ozwolf.mongo.migrations.internal.domain.Migration;
 import net.ozwolf.mongo.migrations.internal.domain.MigrationStatus;
+import org.joda.time.DateTime;
 import org.jongo.Jongo;
 import org.junit.Rule;
 import org.junit.Test;
@@ -17,7 +18,6 @@ import org.junit.rules.ExpectedException;
 import static com.googlecode.totallylazy.Sequences.sequence;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -108,11 +108,14 @@ public class MigrationsServiceTest {
     }
 
     private Migration record(String version, MigrationStatus status) {
-        Migration record = mock(Migration.class);
-        when(record.getVersion()).thenReturn(version);
-        when(record.getStatus()).thenReturn(status);
-        when(record.assign(any(MigrationCommand.class))).thenReturn(record);
-        return record;
+        return new Migration(
+                version,
+                String.format("Migration %s", version),
+                DateTime.now(),
+                (status == MigrationStatus.Successful) ? DateTime.now() : null,
+                status,
+                (status == MigrationStatus.Failed) ? "Failure" : null
+        );
     }
 
     @MongoMigration(version = "1.0.0", description = "First migration")
