@@ -28,10 +28,10 @@ For example:
 @MongoMigration(version = "1.0.0", description = "My first migration")
 public class MyFirstMigration implements MigrationCommand {
     public void migrate(Jongo jongo) {
-        jongo.getCollection("cities").insert("{'city': 'Sydney', 'country': 'Australia'});
-        jongo.getCollection("cities").insert("{'city': 'Melbourne', 'country': 'Australia'});
-        jongo.getCollection("cities").insert("{'city': 'London', 'country': 'United Kingdom'});
-        jongo.getCollection("cities").insert("{'city': 'New York', 'country': 'United States'});
+        jongo.getCollection("cities").insert("{'city': 'Sydney', 'country': 'Australia'}");
+        jongo.getCollection("cities").insert("{'city': 'Melbourne', 'country': 'Australia'}");
+        jongo.getCollection("cities").insert("{'city': 'London', 'country': 'United Kingdom'}");
+        jongo.getCollection("cities").insert("{'city': 'New York', 'country': 'United States'}");
     }
 }
 ```
@@ -68,7 +68,7 @@ public class MyApplication {
 
 ### Logging Configuration
 
-Java Mongo Migrations uses the (LOGBack)[http://logback.qos.ch] project log outputs.
+Java Mongo Migrations uses the [LOGBack](http://logback.qos.ch) project log outputs.
 
 The logger in question is the `MongoMigrations` class logger (ie. `Logger migrationsLogger = LoggerFactory.getLogger(MongoMigrations.class);`)
 
@@ -78,3 +78,9 @@ Messages are logged via the following levels:
 
 + `INFO` - All migration information (ie. configuration, versions, migration information)
 + `ERROR` - If an error occurs (ie. invalid migration command definition or general connection/execution errors)
+
+## Acknowledgements
+
++ [Jongo](http://jongo.org)
++ [Fongo](https://github.com/foursquare/fongo)
++ [LOGBack](http://logback.qos.ch)
