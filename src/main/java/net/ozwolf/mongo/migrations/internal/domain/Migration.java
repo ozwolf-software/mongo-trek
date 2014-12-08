@@ -30,26 +30,20 @@ import static org.joda.time.Seconds.secondsBetween;
 
 public class Migration {
     @Id
-    @JsonProperty("version")
     private final String version;
-    @JsonProperty("description")
     private final String description;
-    @JsonProperty("started")
     @JsonSerialize(using = DateTimeSerializer.class)
     private DateTime started;
-    @JsonProperty("finished")
     @JsonSerialize(using = DateTimeSerializer.class)
     private DateTime finished;
-    @JsonProperty("status")
     private MigrationStatus status;
-    @JsonProperty("failureMessage")
     private String failureMessage;
 
     @JsonIgnore
     private Option<MigrationCommand> command;
 
     @JsonCreator
-    public Migration(@JsonProperty("version") String version,
+    public Migration(@JsonProperty("_id") String version,
                      @JsonProperty("description") String description,
                      @JsonProperty("started") @JsonDeserialize(using = DateTimeDeserializer.class) DateTime started,
                      @JsonProperty("finished") @JsonDeserialize(using = DateTimeDeserializer.class) DateTime finished,

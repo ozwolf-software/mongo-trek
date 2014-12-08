@@ -36,6 +36,4 @@ public class DefaultSchemaVersionDAO implements SchemaVersionDAO {
                 .sortBy(Migration::getVersion);
         return migrations.isEmpty() ? none(Migration.class) : option(migrations.last());
     }
-
-
 }
