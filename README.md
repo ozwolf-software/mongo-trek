@@ -13,6 +13,10 @@ To use this library, clone it locally and run either of the following commands:
 
 To create the JAR, simply run `mvn clean package`
 
+### Java 7 Version
+
+For a Java 7 compilable version, see the `legacy-java7` branch.  Due to the use ot the TotallyLazy Java 8 library on master, I have added a Java 7-compatible branch that uses an older TotallyLazy library. 
+
 ## Usage
 
 ### Define Your Migrations
