@@ -4,10 +4,9 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
-import com.github.fakemongo.Fongo;
+import com.github.fakemongo.junit.FongoRule;
 import com.googlecode.totallylazy.Sequence;
 import com.googlecode.totallylazy.Sequences;
-import com.mongodb.DB;
 import net.ozwolf.mongo.migrations.exception.MongoMigrationsFailureException;
 import net.ozwolf.mongo.migrations.internal.domain.Migration;
 import net.ozwolf.mongo.migrations.internal.domain.MigrationStatus;
@@ -15,12 +14,13 @@ import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
 import org.joda.time.DateTime;
 import org.jongo.Jongo;
-import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
 
+import java.net.UnknownHostException;
 import java.util.List;
 
 import static com.googlecode.totallylazy.Sequences.sequence;
@@ -31,9 +31,10 @@ import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
 
 public class MongoMigrationsIntegrationTest {
-    private final static Fongo FONGO = new Fongo("migration test");
-    private final static DB DATABASE = FONGO.getDB("migration_test");
-    private final static Jongo JONGO = new Jongo(DATABASE);
+    @Rule
+    public FongoRule FONGO = new FongoRule("migration_test", false);
+
+    private Jongo jongo;
 
     private final static Logger LOGGER = (Logger) LoggerFactory.getLogger(MongoMigrations.class);
     private final static String SCHEMA_VERSION_COLLECTION = "_schema_version";
@@ -43,29 +44,22 @@ public class MongoMigrationsIntegrationTest {
     private final ArgumentCaptor<ILoggingEvent> captor = ArgumentCaptor.forClass(ILoggingEvent.class);
 
     @Before
-    public void setUp() {
-        JONGO.getCollection(SCHEMA_VERSION_COLLECTION).drop();
-        JONGO.getCollection("first_migrations").drop();
-        JONGO.getCollection("second_migrations").drop();
+    public void setUp() throws UnknownHostException {
+        this.jongo = new Jongo(FONGO.getDB("migration_test"));
+        jongo.getCollection(SCHEMA_VERSION_COLLECTION).drop();
+        jongo.getCollection("first_migrations").drop();
+        jongo.getCollection("second_migrations").drop();
         Migration migration100 = new Migration("1.0.0", "Applied migration", DateTime.parse("2014-12-05T09:00:00.000+1100"), DateTime.parse("2014-12-05T09:00:02.000+1100"), MigrationStatus.Successful, null);
         Migration migration101 = new Migration("1.0.1", "Another applied migration", DateTime.parse("2014-12-05T09:10:00.000+1100"), DateTime.parse("2014-12-05T09:11:00.000+1100"), MigrationStatus.Successful, null);
         Migration migration102 = new Migration("1.0.2", "Failed last time migration", DateTime.parse("2014-12-05T09:11:01.000+1100"), null, MigrationStatus.Failed, "Something went horribly wrong!");
 
-        JONGO.getCollection(SCHEMA_VERSION_COLLECTION).save(migration100);
-        JONGO.getCollection(SCHEMA_VERSION_COLLECTION).save(migration101);
-        JONGO.getCollection(SCHEMA_VERSION_COLLECTION).save(migration102);
+        jongo.getCollection(SCHEMA_VERSION_COLLECTION).save(migration100);
+        jongo.getCollection(SCHEMA_VERSION_COLLECTION).save(migration101);
+        jongo.getCollection(SCHEMA_VERSION_COLLECTION).save(migration102);
 
         ((Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)).setLevel(Level.INFO);
         LOGGER.setLevel(Level.INFO);
         LOGGER.addAppender(appender);
-    }
-
-    @After
-    public void tearDown() {
-        JONGO.getCollection(SCHEMA_VERSION_COLLECTION).drop();
-        JONGO.getCollection("first_migrations").drop();
-        JONGO.getCollection("second_migrations").drop();
-        LOGGER.detachAppender(appender);
     }
 
     @SuppressWarnings("unchecked")
@@ -78,7 +72,7 @@ public class MongoMigrationsIntegrationTest {
                 new Migration101()
         );
 
-        MongoMigrations migrations = new MongoMigrations(DATABASE);
+        MongoMigrations migrations = new MongoMigrations(dbFactory());
         migrations.setSchemaVersionCollection(SCHEMA_VERSION_COLLECTION);
         migrations.migrate(commands);
 
@@ -89,8 +83,8 @@ public class MongoMigrationsIntegrationTest {
                 migrationOf("2.0.0", MigrationStatus.Successful)
         );
 
-        assertThat(JONGO.getCollection("first_migrations").findOne("{'name':'Homer Simpson'}").map(r -> (Integer) r.get("age")), is(37));
-        assertThat(JONGO.getCollection("second_migrations").findOne("{'town':'Shelbyville'}").map(r -> (String) r.get("country")), is("United States"));
+        assertThat(jongo.getCollection("first_migrations").findOne("{'name':'Homer Simpson'}").map(r -> (Integer) r.get("age")), is(37));
+        assertThat(jongo.getCollection("second_migrations").findOne("{'town':'Shelbyville'}").map(r -> (String) r.get("country")), is("United States"));
 
         verify(appender, atLeastOnce()).doAppend(captor.capture());
 
@@ -108,8 +102,22 @@ public class MongoMigrationsIntegrationTest {
     }
 
     @Test
+    public void shouldHandleZeroPendingMigrations() throws MongoMigrationsFailureException {
+        MongoMigrations migrations = new MongoMigrations(dbFactory());
+        migrations.setSchemaVersionCollection(SCHEMA_VERSION_COLLECTION);
+        migrations.migrate(sequence(new Migration100()));
+
+        verify(appender, atLeastOnce()).doAppend(captor.capture());
+
+        List<ILoggingEvent> events = captor.getAllValues();
+
+        assertThat(events, hasItem(loggedMessage("DATABASE MIGRATIONS")));
+        assertThat(events, hasItem(loggedMessage("   No migrations to apply.")));
+    }
+
+    @Test
     public void shouldHandleZeroCommandsProvided() throws MongoMigrationsFailureException {
-        MongoMigrations migrations = new MongoMigrations(DATABASE);
+        MongoMigrations migrations = new MongoMigrations(dbFactory());
         migrations.setSchemaVersionCollection(SCHEMA_VERSION_COLLECTION);
         migrations.migrate(Sequences.<MigrationCommand>sequence());
 
@@ -133,7 +141,7 @@ public class MongoMigrationsIntegrationTest {
         );
 
         try {
-            MongoMigrations migrations = new MongoMigrations(DATABASE);
+            MongoMigrations migrations = new MongoMigrations(dbFactory());
             migrations.setSchemaVersionCollection(SCHEMA_VERSION_COLLECTION);
             migrations.migrate(commands);
 
@@ -153,8 +161,8 @@ public class MongoMigrationsIntegrationTest {
                     migrationOf("2.0.0.1", MigrationStatus.Failed)
             );
 
-            assertThat(JONGO.getCollection("first_migrations").findOne("{'name':'Homer Simpson'}").map(r -> (Integer) r.get("age")), is(37));
-            assertThat(JONGO.getCollection("second_migrations").findOne("{'town':'Shelbyville'}").map(r -> (String) r.get("country")), is("United States"));
+            assertThat(jongo.getCollection("first_migrations").findOne("{'name':'Homer Simpson'}").map(r -> (Integer) r.get("age")), is(37));
+            assertThat(jongo.getCollection("second_migrations").findOne("{'town':'Shelbyville'}").map(r -> (String) r.get("country")), is("United States"));
 
             verify(appender, atLeastOnce()).doAppend(captor.capture());
 
@@ -184,7 +192,7 @@ public class MongoMigrationsIntegrationTest {
                 new Migration101()
         );
 
-        MongoMigrations migrations = new MongoMigrations(DATABASE);
+        MongoMigrations migrations = new MongoMigrations(dbFactory());
         migrations.setSchemaVersionCollection(SCHEMA_VERSION_COLLECTION);
         migrations.status(commands);
 
@@ -210,10 +218,14 @@ public class MongoMigrationsIntegrationTest {
 
     @SuppressWarnings("unchecked")
     private void validateMigrations(TypeSafeMatcher<Migration>... migrations) {
-        Sequence<Migration> records = sequence(JONGO.getCollection(SCHEMA_VERSION_COLLECTION).find().as(Migration.class));
+        Sequence<Migration> records = sequence(jongo.getCollection(SCHEMA_VERSION_COLLECTION).find().as(Migration.class));
         assertThat(records.size(), is(migrations.length));
         for (TypeSafeMatcher<Migration> checker : migrations)
             assertThat(records, hasItem(checker));
+    }
+
+    private MongoMigrations.DBFactory dbFactory() {
+        return () -> FONGO.getMongo().getDB("migration_test");
     }
 
     @MongoMigration(version = "1.0.0", description = "Applied migration")

@@ -20,7 +20,13 @@ public class MigrationsService {
         this.schemaVersionDAO = schemaVersionDAO;
     }
 
+    public Option<Migration> getLastSuccessful() {
+        return this.schemaVersionDAO.findLastSuccessful();
+    }
+
     public Sequence<Migration> getPendingMigrations(Collection<MigrationCommand> commands) throws Throwable {
+        if (commands.isEmpty()) return sequence();
+
         Sequence<Migration> alreadyRun = schemaVersionDAO.findAll();
 
         try {
