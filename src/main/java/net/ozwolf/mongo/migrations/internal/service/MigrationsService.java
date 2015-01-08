@@ -1,17 +1,19 @@
 package net.ozwolf.mongo.migrations.internal.service;
 
-import com.googlecode.totallylazy.*;
 import net.ozwolf.mongo.migrations.MigrationCommand;
 import net.ozwolf.mongo.migrations.MongoMigration;
 import net.ozwolf.mongo.migrations.exception.DuplicateVersionException;
 import net.ozwolf.mongo.migrations.exception.MissingAnnotationException;
 import net.ozwolf.mongo.migrations.internal.dao.SchemaVersionDAO;
 import net.ozwolf.mongo.migrations.internal.domain.Migration;
-import net.ozwolf.mongo.migrations.internal.domain.MigrationStatus;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
 
-import static com.googlecode.totallylazy.Sequences.sequence;
+import static java.util.stream.Collectors.toList;
 
 public class MigrationsService {
     private final SchemaVersionDAO schemaVersionDAO;
@@ -20,59 +22,62 @@ public class MigrationsService {
         this.schemaVersionDAO = schemaVersionDAO;
     }
 
-    public Option<Migration> getLastSuccessful() {
+    public Optional<Migration> getLastSuccessful() {
         return this.schemaVersionDAO.findLastSuccessful();
     }
 
-    public Sequence<Migration> getPendingMigrations(Collection<MigrationCommand> commands) throws Throwable {
-        if (commands.isEmpty()) return sequence();
+    public List<Migration> getPendingMigrations(Collection<MigrationCommand> commands) throws MissingAnnotationException, DuplicateVersionException {
+        if (commands.isEmpty()) return new ArrayList<>();
 
-        Sequence<Migration> alreadyRun = schemaVersionDAO.findAll();
+        List<Migration> alreadyRun = schemaVersionDAO.findAll();
 
-        try {
-            return sequence(commands)
-                    .map(asMigration())
-                    .groupBy(Migration::getVersion)
-                    .map(checkDuplicates())
-                    .map(joinWith(alreadyRun))
-                    .filter(m -> !(m.getStatus() == MigrationStatus.Successful))
-                    .sortBy(Migration::getComparableVersion)
-                    .realise();
-        } catch (LazyException e) {
-            throw e.getCause();
-        }
+        List<Migration> commandMigrations = commands
+                .stream()
+                .map(asMigration())
+                .collect(toList());
+
+        checkForDuplicateVersions(commandMigrations);
+
+        return commandMigrations.stream()
+                .map(joinWith(alreadyRun))
+                .filter(m -> !m.isSuccessful())
+                .sorted((m1, m2) -> m1.getComparableVersion().compareTo(m2.getComparableVersion()))
+                .collect(toList());
     }
 
-    public Sequence<Migration> getFullState(Collection<MigrationCommand> commands) throws Throwable {
-        Sequence<Migration> alreadyRun = schemaVersionDAO.findAll();
+    public List<Migration> getFullState(Collection<MigrationCommand> commands) throws MissingAnnotationException, DuplicateVersionException {
+        List<Migration> alreadyRun = schemaVersionDAO.findAll();
 
-        try {
-            return sequence(commands)
-                    .map(asMigration())
-                    .groupBy(Migration::getVersion)
-                    .map(checkDuplicates())
-                    .map(joinWith(alreadyRun))
-                    .sortBy(Migration::getComparableVersion);
-        } catch (LazyException e) {
-            throw e.getCause();
-        }
+        List<Migration> commandMigrations = commands
+                .stream()
+                .map(asMigration())
+                .collect(toList());
+
+        checkForDuplicateVersions(commandMigrations);
+
+        return commandMigrations
+                .stream()
+                .map(joinWith(alreadyRun))
+                .sorted((m1, m2) -> m1.getComparableVersion().compareTo(m2.getComparableVersion()))
+                .collect(toList());
+
     }
 
-    private static Function<Migration, Migration> joinWith(final Sequence<Migration> alreadyRun) {
+    private void checkForDuplicateVersions(List<Migration> migrations) throws DuplicateVersionException {
+        List<Migration> duplicateVersions = migrations.stream()
+                .filter(m -> migrations.stream().filter(cm -> cm.getVersion().equals(m.getVersion())).count() > 1)
+                .collect(toList());
+
+        if (!duplicateVersions.isEmpty())
+            throw new DuplicateVersionException(duplicateVersions.get(0));
+    }
+
+    private static Function<Migration, Migration> joinWith(final List<Migration> alreadyRun) {
         return migration -> {
-            Option<Migration> found = alreadyRun.find(o -> o.getVersion().equals(migration.getVersion()));
+            Optional<Migration> found = alreadyRun.stream().filter(o -> o.getVersion().equals(migration.getVersion())).findFirst();
             return found
-                    .getOrElse(migration)
+                    .orElse(migration)
                     .assign(migration.getCommand());
-        };
-    }
-
-    private static Function<Group<String, Migration>, Migration> checkDuplicates() {
-        return migrations -> {
-            if (migrations.size() > 1)
-                throw new DuplicateVersionException(migrations.first());
-
-            return migrations.first();
         };
     }
 

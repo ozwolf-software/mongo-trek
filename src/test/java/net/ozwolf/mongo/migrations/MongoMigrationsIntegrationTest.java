@@ -5,8 +5,6 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.github.fakemongo.junit.FongoRule;
-import com.googlecode.totallylazy.Sequence;
-import com.googlecode.totallylazy.Sequences;
 import net.ozwolf.mongo.migrations.exception.MongoMigrationsFailureException;
 import net.ozwolf.mongo.migrations.internal.domain.Migration;
 import net.ozwolf.mongo.migrations.internal.domain.MigrationStatus;
@@ -21,9 +19,10 @@ import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
 
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-import static com.googlecode.totallylazy.Sequences.sequence;
 import static net.ozwolf.mongo.migrations.matchers.LoggingMatchers.loggedMessage;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -65,7 +64,7 @@ public class MongoMigrationsIntegrationTest {
     @SuppressWarnings("unchecked")
     @Test
     public void shouldRetryFailedMigrationsAndApplyNewOnesAndCompleteSuccessfully() throws MongoMigrationsFailureException {
-        Sequence<MigrationCommand> commands = sequence(
+        List<MigrationCommand> commands = commands(
                 new Migration100(),
                 new Migration200(),
                 new Migration102(),
@@ -105,7 +104,7 @@ public class MongoMigrationsIntegrationTest {
     public void shouldHandleZeroPendingMigrations() throws MongoMigrationsFailureException {
         MongoMigrations migrations = new MongoMigrations(dbFactory());
         migrations.setSchemaVersionCollection(SCHEMA_VERSION_COLLECTION);
-        migrations.migrate(sequence(new Migration100()));
+        migrations.migrate(commands(new Migration100()));
 
         verify(appender, atLeastOnce()).doAppend(captor.capture());
 
@@ -119,7 +118,7 @@ public class MongoMigrationsIntegrationTest {
     public void shouldHandleZeroCommandsProvided() throws MongoMigrationsFailureException {
         MongoMigrations migrations = new MongoMigrations(dbFactory());
         migrations.setSchemaVersionCollection(SCHEMA_VERSION_COLLECTION);
-        migrations.migrate(Sequences.<MigrationCommand>sequence());
+        migrations.migrate(commands());
 
         verify(appender, atLeastOnce()).doAppend(captor.capture());
 
@@ -132,7 +131,7 @@ public class MongoMigrationsIntegrationTest {
     @SuppressWarnings("unchecked")
     @Test
     public void shouldFailMigrationsOnLastMigration() {
-        Sequence<MigrationCommand> commands = sequence(
+        List<MigrationCommand> commands = commands(
                 new Migration100(),
                 new Migration200(),
                 new Migration2001(),
@@ -184,7 +183,7 @@ public class MongoMigrationsIntegrationTest {
 
     @Test
     public void shouldReportOnMigrations() throws MongoMigrationsFailureException {
-        Sequence<MigrationCommand> commands = sequence(
+        List<MigrationCommand> commands = commands(
                 new Migration100(),
                 new Migration200(),
                 new Migration2001(),
@@ -218,10 +217,15 @@ public class MongoMigrationsIntegrationTest {
 
     @SuppressWarnings("unchecked")
     private void validateMigrations(TypeSafeMatcher<Migration>... migrations) {
-        Sequence<Migration> records = sequence(jongo.getCollection(SCHEMA_VERSION_COLLECTION).find().as(Migration.class));
+        List<Migration> records = new ArrayList<>();
+        jongo.getCollection(SCHEMA_VERSION_COLLECTION).find().as(Migration.class).forEach(m -> records.add(m));
         assertThat(records.size(), is(migrations.length));
         for (TypeSafeMatcher<Migration> checker : migrations)
             assertThat(records, hasItem(checker));
+    }
+
+    private static List<MigrationCommand> commands(MigrationCommand... commands) {
+        return Arrays.asList(commands);
     }
 
     private MongoMigrations.DBFactory dbFactory() {

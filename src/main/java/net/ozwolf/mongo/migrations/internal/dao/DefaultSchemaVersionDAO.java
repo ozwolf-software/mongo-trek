@@ -1,14 +1,12 @@
 package net.ozwolf.mongo.migrations.internal.dao;
 
-import com.googlecode.totallylazy.Option;
-import com.googlecode.totallylazy.Sequence;
 import net.ozwolf.mongo.migrations.internal.domain.Migration;
 import net.ozwolf.mongo.migrations.internal.domain.MigrationStatus;
 import org.jongo.Jongo;
 
-import static com.googlecode.totallylazy.Option.none;
-import static com.googlecode.totallylazy.Option.option;
-import static com.googlecode.totallylazy.Sequences.sequence;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 public class DefaultSchemaVersionDAO implements SchemaVersionDAO {
     private final Jongo jongo;
@@ -20,8 +18,13 @@ public class DefaultSchemaVersionDAO implements SchemaVersionDAO {
     }
 
     @Override
-    public Sequence<Migration> findAll() {
-        return sequence(jongo.getCollection(schemaVersionCollection).find().as(Migration.class));
+    public List<Migration> findAll() {
+        List<Migration> migrations = new ArrayList<>();
+        jongo.getCollection(schemaVersionCollection)
+                .find()
+                .as(Migration.class)
+                .forEach(migrations::add);
+        return migrations;
     }
 
     @Override
@@ -30,10 +33,10 @@ public class DefaultSchemaVersionDAO implements SchemaVersionDAO {
     }
 
     @Override
-    public Option<Migration> findLastSuccessful() {
-        Sequence<Migration> migrations = this.findAll()
+    public Optional<Migration> findLastSuccessful() {
+        return this.findAll().stream()
                 .filter(m -> m.getStatus() == MigrationStatus.Successful)
-                .sortBy(Migration::getVersion);
-        return migrations.isEmpty() ? none(Migration.class) : option(migrations.last());
+                .sorted((m1, m2) -> m1.getVersion().compareTo(m2.getVersion()))
+                .reduce((p, c) -> c);
     }
 }

@@ -11,7 +11,6 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.googlecode.totallylazy.Option;
 import net.ozwolf.mongo.migrations.MigrationCommand;
 import net.ozwolf.mongo.migrations.MongoMigration;
 import org.apache.commons.lang.StringUtils;
@@ -24,8 +23,8 @@ import org.jongo.marshall.jackson.oid.Id;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
-import static com.googlecode.totallylazy.Option.option;
 import static org.joda.time.Seconds.secondsBetween;
 
 public class Migration {
@@ -40,7 +39,7 @@ public class Migration {
     private String failureMessage;
 
     @JsonIgnore
-    private Option<MigrationCommand> command;
+    private Optional<MigrationCommand> command;
 
     @JsonCreator
     public Migration(@JsonProperty("_id") String version,
@@ -59,7 +58,7 @@ public class Migration {
 
     public Migration(MongoMigration annotation, MigrationCommand command) {
         this(annotation.version(), annotation.description(), null, null, MigrationStatus.Pending, null);
-        this.command = option(command);
+        this.command = Optional.of(command);
     }
 
     public String getVersion() {
@@ -83,12 +82,28 @@ public class Migration {
         return status;
     }
 
+    public boolean isSuccessful() {
+        return status == MigrationStatus.Successful;
+    }
+
+    public boolean isFailed() {
+        return status == MigrationStatus.Failed;
+    }
+
+    public boolean isPending() {
+        return status == MigrationStatus.Pending;
+    }
+
+    public boolean isRunning() {
+        return status == MigrationStatus.Running;
+    }
+
     public MigrationCommand getCommand() {
-        return command.getOrThrow(new IllegalStateException(String.format("No command attached to migration [ %s ]", version)));
+        return command.orElseThrow(() -> new IllegalStateException(String.format("No command attached to migration [ %s ]", version)));
     }
 
     public Migration assign(MigrationCommand command) {
-        this.command = option(command);
+        this.command = Optional.of(command);
         return this;
     }
 

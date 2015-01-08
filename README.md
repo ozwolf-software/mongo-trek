@@ -9,13 +9,19 @@ This library utilises the [Jongo](http://jongo.org) library for executing migrat
 To use this library, clone it locally and run either of the following commands:
 
 + Local Repository: `mvn clean install`
-+ Central Repository: `mvn clean deploy`
++ Shared Repository: `mvn clean package` the upload into your shared repository.
 
 To create the JAR, simply run `mvn clean package`
 
 ### Java 7 Version
 
-For a Java 7 compilable version, see the `legacy-java7` branch.  Due to the use ot the TotallyLazy Java 8 library on master, I have added a Java 7-compatible branch that uses an older TotallyLazy library. 
+For a Java 7 compilable version, see the `legacy-java7` branch.  The main reason for this is that Java 7 does not have the `Stream` object available and we use the `TotallyLazy` library to achieve this.
+ 
+As of Java 8, the `Stream` object means we do not need the TotallyLazy library.
+
+The Java 7 version is not maintained.
+
+The version number for the Java 7 version is suffixed with `-jdk7`. 
 
 ## Usage
 
@@ -73,6 +79,9 @@ public class MyApplication {
 ### Logging Configuration
 
 Java Mongo Migrations uses the [LOGBack](http://logback.qos.ch) project log outputs.
+
+
+
 
 The logger in question is the `MongoMigrations` class logger (ie. `Logger migrationsLogger = LoggerFactory.getLogger(MongoMigrations.class);`)
 

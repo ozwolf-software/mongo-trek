@@ -1,13 +1,14 @@
 package net.ozwolf.mongo.migrations.internal.dao;
 
-import com.googlecode.totallylazy.Option;
-import com.googlecode.totallylazy.Sequence;
 import net.ozwolf.mongo.migrations.internal.domain.Migration;
 
+import java.util.List;
+import java.util.Optional;
+
 public interface SchemaVersionDAO {
-    Sequence<Migration> findAll();
+    List<Migration> findAll();
 
     void save(Migration record);
 
-    Option<Migration> findLastSuccessful();
+    Optional<Migration> findLastSuccessful();
 }

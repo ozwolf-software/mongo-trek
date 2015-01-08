@@ -1,7 +1,5 @@
 package net.ozwolf.mongo.migrations.internal.service;
 
-import com.googlecode.totallylazy.Sequence;
-import com.googlecode.totallylazy.Sequences;
 import net.ozwolf.mongo.migrations.MigrationCommand;
 import net.ozwolf.mongo.migrations.MongoMigration;
 import net.ozwolf.mongo.migrations.exception.DuplicateVersionException;
@@ -15,7 +13,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import static com.googlecode.totallylazy.Sequences.sequence;
+import java.util.Arrays;
+import java.util.List;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.mock;
@@ -33,22 +33,22 @@ public class MigrationsServiceTest {
         Migration previous2 = record("1.0.1", MigrationStatus.Successful);
         Migration previous3 = record("1.0.2", MigrationStatus.Failed);
 
-        Sequence<Migration> previouslyRun = sequence(previous1, previous3, previous2);
+        List<Migration> previouslyRun = migrations(previous1, previous3, previous2);
 
         when(schemaVersionDAO.findAll()).thenReturn(previouslyRun);
 
-        Sequence<MigrationCommand> commands = sequence(
+        List<MigrationCommand> commands = commands(
                 new CommandOne(),
                 new CommandTwo(),
                 new CommandFour(),
                 new CommandThree()
         );
 
-        Sequence<Migration> pendingMigrations = new MigrationsService(schemaVersionDAO).getPendingMigrations(commands);
+        List<Migration> pendingMigrations = new MigrationsService(schemaVersionDAO).getPendingMigrations(commands);
 
         assertThat(pendingMigrations.size(), is(2));
-        assertThat(pendingMigrations.first().getVersion(), is("1.0.2"));
-        assertThat(pendingMigrations.second().getVersion(), is("2.0.0"));
+        assertThat(pendingMigrations.get(0).getVersion(), is("1.0.2"));
+        assertThat(pendingMigrations.get(1).getVersion(), is("2.0.0"));
     }
 
     @Test
@@ -57,18 +57,18 @@ public class MigrationsServiceTest {
         Migration previous2 = record("1.0.1", MigrationStatus.Successful);
         Migration previous3 = record("1.0.2", MigrationStatus.Failed);
 
-        Sequence<Migration> previouslyRun = sequence(previous1, previous3, previous2);
+        List<Migration> previouslyRun = migrations(previous1, previous3, previous2);
 
         when(schemaVersionDAO.findAll()).thenReturn(previouslyRun);
 
-        Sequence<MigrationCommand> commands = sequence(
+        List<MigrationCommand> commands = commands(
                 new CommandOne(),
                 new CommandTwo(),
                 new CommandFour(),
                 new CommandThree()
         );
 
-        Sequence<Migration> migrations = new MigrationsService(schemaVersionDAO).getFullState(commands);
+        List<Migration> migrations = new MigrationsService(schemaVersionDAO).getFullState(commands);
 
         assertThat(migrations.size(), is(4));
         assertThat(migrations.get(0).getVersion(), is("1.0.0"));
@@ -79,9 +79,9 @@ public class MigrationsServiceTest {
 
     @Test
     public void shouldThrowDuplicateVersionException() throws Throwable {
-        when(schemaVersionDAO.findAll()).thenReturn(Sequences.<Migration>sequence());
+        when(schemaVersionDAO.findAll()).thenReturn(migrations());
 
-        Sequence<MigrationCommand> commands = sequence(
+        List<MigrationCommand> commands = commands(
                 new CommandFour(),
                 new CommandThree(),
                 new DuplicateCommandFour()
@@ -93,10 +93,10 @@ public class MigrationsServiceTest {
     }
 
     @Test
-    public void shouldThrowmissingAnnotationException() throws Throwable {
-        when(schemaVersionDAO.findAll()).thenReturn(Sequences.<Migration>sequence());
+    public void shouldThrowMissingAnnotationException() throws Throwable {
+        when(schemaVersionDAO.findAll()).thenReturn(migrations());
 
-        Sequence<MigrationCommand> commands = sequence(
+        List<MigrationCommand> commands = commands(
                 new CommandFour(),
                 new CommandThree(),
                 new MissingAnnotationCommand()
@@ -116,6 +116,14 @@ public class MigrationsServiceTest {
                 status,
                 (status == MigrationStatus.Failed) ? "Failure" : null
         );
+    }
+
+    private static List<Migration> migrations(Migration... migrations) {
+        return Arrays.asList(migrations);
+    }
+
+    private static List<MigrationCommand> commands(MigrationCommand... commands) {
+        return Arrays.asList(commands);
     }
 
     @MongoMigration(version = "1.0.0", description = "First migration")

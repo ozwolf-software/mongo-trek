@@ -1,7 +1,5 @@
 package net.ozwolf.mongo.migrations;
 
-import com.googlecode.totallylazy.Option;
-import com.googlecode.totallylazy.Sequence;
 import com.mongodb.DB;
 import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
@@ -19,6 +17,8 @@ import org.slf4j.LoggerFactory;
 
 import java.net.UnknownHostException;
 import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -34,29 +34,29 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * ```java
  * public class MyApplication {
- *      public void start(){
- *          MongoClientUri uri = new MongoClientUri("mongo://root:password@localhost:27017/my_application");
+ * public void start(){
+ * MongoClientUri uri = new MongoClientUri("mongo://root:password@localhost:27017/my_application");
  *
- *          List<MongoCommand> commands = new ArrayList<>();
- *          commands.add(new FirstCommand());
- *          commands.add(new SecondCommand());
+ * List<MongoCommand> commands = new ArrayList<>();
+ * commands.add(new FirstCommand());
+ * commands.add(new SecondCommand());
  *
- *          try {
- *              MongoMigrations migrations = new MongoMigrations(uri);
- *              migrations.setSchemaVersionCollection("_schema_version_my_application");
- *              migrations.migrate(commands);
- *          } catch (MongoMigrationFailureException e) {
- *              LOGGER.error("Error migrating database, e);
- *          }
- *      }
+ * try {
+ * MongoMigrations migrations = new MongoMigrations(uri);
+ * migrations.setSchemaVersionCollection("_schema_version_my_application");
+ * migrations.migrate(commands);
+ * } catch (MongoMigrationFailureException e) {
+ * LOGGER.error("Error migrating database, e);
+ * }
+ * }
  * }
  * ```
  */
 public class MongoMigrations {
     private final Jongo jongo;
 
-    private Option<SchemaVersionDAO> schemaVersionDAO;
-    private Option<MigrationsService> migrationsServices;
+    private Optional<SchemaVersionDAO> schemaVersionDAO;
+    private Optional<MigrationsService> migrationsServices;
     private String schemaVersionCollection;
 
     private final static Logger LOGGER = LoggerFactory.getLogger(MongoMigrations.class);
@@ -72,8 +72,8 @@ public class MongoMigrations {
     public MongoMigrations(String uri) {
         this.jongo = new Jongo(connectTo(new MongoClientURI(uri)));
         this.schemaVersionCollection = DEFAULT_SCHEMA_VERSION_COLLECTION;
-        this.schemaVersionDAO = Option.none();
-        this.migrationsServices = Option.none();
+        this.schemaVersionDAO = Optional.empty();
+        this.migrationsServices = Optional.empty();
     }
 
     /**
@@ -86,8 +86,8 @@ public class MongoMigrations {
     public MongoMigrations(DBFactory factory) {
         this.jongo = new Jongo(factory.connectTo());
         this.schemaVersionCollection = DEFAULT_SCHEMA_VERSION_COLLECTION;
-        this.schemaVersionDAO = Option.none();
-        this.migrationsServices = Option.none();
+        this.schemaVersionDAO = Optional.empty();
+        this.migrationsServices = Optional.empty();
     }
 
     /**
@@ -116,18 +116,22 @@ public class MongoMigrations {
         AtomicInteger successfulCount = new AtomicInteger(0);
 
         try {
-            Option<Migration> lastSuccessful = migrationsService().getLastSuccessful();
-            Sequence<Migration> pendingMigrations = migrationsService().getPendingMigrations(commands);
+            Optional<Migration> lastSuccessful = migrationsService().getLastSuccessful();
+            List<Migration> pendingMigrations = migrationsService().getPendingMigrations(commands);
             if (pendingMigrations.isEmpty()) {
                 LOGGER.info("   No migrations to apply.");
                 return;
             }
 
+            Migration firstMigration = pendingMigrations.stream().findFirst().get();
+            Migration lastMigration = pendingMigrations.stream().reduce((a, b) -> b).get();
+
             logStatus("migrate", lastSuccessful);
-            LOGGER.info(String.format("       Applying : [ %s ] -> [ %s ]", pendingMigrations.first().getVersion(), pendingMigrations.last().getVersion()));
+            LOGGER.info(String.format("       Applying : [ %s ] -> [ %s ]", firstMigration.getVersion(), lastMigration.getVersion()));
             LOGGER.info("     Migrations :");
-            for (Migration migration : pendingMigrations) applyMigration(jongo, successfulCount, migration);
-        } catch (Throwable e) {
+
+            pendingMigrations.stream().forEach(m -> applyMigration(jongo, successfulCount, m));
+        } catch (Exception e) {
             LOGGER.error("Error applying migration(s)", e);
             throw new MongoMigrationsFailureException(e);
         } finally {
@@ -146,14 +150,14 @@ public class MongoMigrations {
     public void status(Collection<MigrationCommand> commands) throws MongoMigrationsFailureException {
         LOGGER.info("DATABASE MIGRATIONS");
         try {
-            Option<Migration> lastSuccessful = migrationsService().getLastSuccessful();
-            Sequence<Migration> migrations = migrationsService().getFullState(commands);
+            Optional<Migration> lastSuccessful = migrationsService().getLastSuccessful();
+            List<Migration> migrations = migrationsService().getFullState(commands);
 
             logStatus("status", lastSuccessful);
             LOGGER.info("     Migrations :");
 
-            for (Migration migration : migrations) reportMigration(migration);
-        } catch (Throwable e) {
+            migrations.stream().forEach(this::reportMigration);
+        } catch (Exception e) {
             LOGGER.error("Error in commands and cannot provide status", e);
             throw new MongoMigrationsFailureException(e);
         } finally {
@@ -161,11 +165,11 @@ public class MongoMigrations {
         }
     }
 
-    private void logStatus(String action, Option<Migration> lastSuccessful) {
+    private void logStatus(String action, Optional<Migration> lastSuccessful) {
         LOGGER.info(String.format("       Database : [ %s ]", this.jongo.getDatabase().getName()));
         LOGGER.info(String.format(" Schema Version : [ %s ]", schemaVersionCollection));
         LOGGER.info(String.format("         Action : [ %s ]", action));
-        LOGGER.info(String.format("Current Version : [ %s ]", (lastSuccessful.isDefined()) ? lastSuccessful.get().getVersion() : "n/a"));
+        LOGGER.info(String.format("Current Version : [ %s ]", (lastSuccessful.isPresent()) ? lastSuccessful.get().getVersion() : "n/a"));
     }
 
     private void applyMigration(Jongo jongo, AtomicInteger successfulCount, Migration migration) {
@@ -196,14 +200,14 @@ public class MongoMigrations {
     }
 
     private MigrationsService migrationsService() {
-        if (migrationsServices.isEmpty())
-            migrationsServices = Option.option(new MigrationsService(schemaVersionDAO()));
+        if (!migrationsServices.isPresent())
+            migrationsServices = Optional.of(new MigrationsService(schemaVersionDAO()));
         return migrationsServices.get();
     }
 
     private SchemaVersionDAO schemaVersionDAO() {
-        if (schemaVersionDAO.isEmpty())
-            schemaVersionDAO = Option.option(new DefaultSchemaVersionDAO(this.jongo, this.schemaVersionCollection));
+        if (!schemaVersionDAO.isPresent())
+            schemaVersionDAO = Optional.of(new DefaultSchemaVersionDAO(this.jongo, this.schemaVersionCollection));
         return schemaVersionDAO.get();
     }
 
