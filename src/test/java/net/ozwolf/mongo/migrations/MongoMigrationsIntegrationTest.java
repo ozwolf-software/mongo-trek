@@ -11,6 +11,7 @@ import net.ozwolf.mongo.migrations.internal.domain.MigrationStatus;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.jongo.Jongo;
 import org.junit.Before;
 import org.junit.Rule;
@@ -216,7 +217,7 @@ public class MongoMigrationsIntegrationTest {
     }
 
     private String toTimeStamp(String timeStamp) {
-        return DateTime.parse(timeStamp).toLocalDateTime().toString("yyyy-MM-dd HH:mm:ss");
+        return DateTime.parse(timeStamp).toDateTime(DateTimeZone.getDefault()).toString("yyyy-MM-dd HH:mm:ss");
     }
 
     @SuppressWarnings("unchecked")
