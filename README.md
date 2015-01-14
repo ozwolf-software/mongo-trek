@@ -1,5 +1,7 @@
 # Java Mongo Migrations
 
+[![Build Status](https://travis-ci.org/ozwolf-software/java-mongo-migrations.svg?branch=master)](https://travis-ci.org/ozwolf-software/java-mongo-migrations)
+
 This library is designed to allow tracked Mongo schema migrations inside a Java application, creating the ability to write code-based database migrations utilising your own Java driver connection to achieve this.
 
 This library utilises the [Jongo](http://jongo.org) library for executing migrations against the Mongo database schema, while keeping track of migration state.
