@@ -216,7 +216,7 @@ public class MongoMigrationsIntegrationTest {
     }
 
     private String toTimeStamp(String timeStamp) {
-        return DateTime.parse(timeStamp).toString("yyyy-MM-dd HH:mm:ss");
+        return DateTime.parse(timeStamp).toLocalDateTime().toString("yyyy-MM-dd HH:mm:ss");
     }
 
     @SuppressWarnings("unchecked")
