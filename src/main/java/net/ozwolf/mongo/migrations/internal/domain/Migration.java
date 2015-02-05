@@ -56,8 +56,8 @@ public class Migration {
         this.failureMessage = failureMessage;
     }
 
-    public Migration(MongoMigration annotation, MigrationCommand command) {
-        this(annotation.version(), annotation.description(), null, null, MigrationStatus.Pending, null);
+    public Migration(MigrationCommand command) {
+        this(command.getVersion(), command.getDescription(), null, null, MigrationStatus.Pending, null);
         this.command = Optional.of(command);
     }
 

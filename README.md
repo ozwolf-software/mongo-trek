@@ -27,16 +27,14 @@ The version number for the Java 7 version is suffixed with `-jdk7`.
 
 ### Define Your Migrations
 
-Migrations require to be two components:
+Migrations need to extend the Migration command and be named as such `V<version>__<name>`.
 
-1. Implement the `MigrationCommand` interface
-2. Be annotated with the `@MongoMigration` annotation describing version information
+For example, `V1_0_0__MyFirstMigration` will be interpreted as version `1.0.0` with a description of `My first migration`.
 
 For example:
 
 ```java
-@MongoMigration(version = "1.0.0", description = "My first migration")
-public class MyFirstMigration implements MigrationCommand {
+public class V1_0_0__MyFirstMigration extends MigrationCommand {
     public void migrate(Jongo jongo) {
         jongo.getCollection("cities").insert("{'city': 'Sydney', 'country': 'Australia'}");
         jongo.getCollection("cities").insert("{'city': 'Melbourne', 'country': 'Australia'}");
@@ -57,16 +55,12 @@ For example:
 ```java
 public class MyApplication {
     public void start(){
-        MongoClientUri uri = new MongoClientUri("mongo://localhost:27017/my_application_schema");
-        Mongo mongo = new MongoClient(uri);
-        DB db = mongo.getDatabase(uri.getDatabase());
-        
         List<MongoCommand> commands = new ArrayList<>();
         commands.add(new FirstMigration());
         commands.add(new SecondMigration());
         
         try {
-            MongoMigrations migrations = new MongoMigrations(db);
+            MongoMigrations migrations = new MongoMigrations("mongo://localhost:27017/my_application_schema");
             migrations.setSchemaVersionCollection("_my_custom_schema_version");
             migrations.migrate(commands);
         } catch (MongoMigrationsFailureException e) {
@@ -79,9 +73,6 @@ public class MyApplication {
 ### Logging Configuration
 
 Java Mongo Migrations uses the [LOGBack](http://logback.qos.ch) project log outputs.
-
-
-
 
 The logger in question is the `MongoMigrations` class logger (ie. `Logger migrationsLogger = LoggerFactory.getLogger(MongoMigrations.class);`)
 
