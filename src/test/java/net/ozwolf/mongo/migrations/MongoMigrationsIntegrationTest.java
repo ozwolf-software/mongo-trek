@@ -11,6 +11,7 @@ import net.ozwolf.mongo.migrations.internal.domain.MigrationStatus;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.jongo.Jongo;
 import org.junit.Before;
 import org.junit.Rule;
@@ -204,21 +205,25 @@ public class MongoMigrationsIntegrationTest {
         assertThat(events, hasItem(loggedMessage("Current Version : [ 1.0.1 ]")));
         assertThat(events, hasItem(loggedMessage("     Migrations :")));
         assertThat(events, hasItem(loggedMessage("       1.0.0 : Applied migration")));
-        assertThat(events, hasItem(loggedMessage("          Tags: [ Successful ] [ 2014-12-05 09:00:00 ] [ 2 seconds ]")));
+        assertThat(events, hasItem(loggedMessage(String.format("          Tags: [ Successful ] [ %s ] [ 2 seconds ]", toTimeStamp("2014-12-05T09:00:00+1100")))));
         assertThat(events, hasItem(loggedMessage("       1.0.1 : Another applied migration")));
-        assertThat(events, hasItem(loggedMessage("          Tags: [ Successful ] [ 2014-12-05 09:10:00 ] [ 60 seconds ]")));
+        assertThat(events, hasItem(loggedMessage(String.format("          Tags: [ Successful ] [ %s ] [ 60 seconds ]", toTimeStamp("2014-12-05T09:10:00+1100")))));
         assertThat(events, hasItem(loggedMessage("       1.0.2 : Failed last time migration")));
-        assertThat(events, hasItem(loggedMessage("          Tags: [ Failed ] [ 2014-12-05 09:11:01 ] [ ERROR: Something went horribly wrong! ]")));
+        assertThat(events, hasItem(loggedMessage(String.format("          Tags: [ Failed ] [ %s ] [ ERROR: Something went horribly wrong! ]", toTimeStamp("2014-12-05T09:11:01+1100")))));
         assertThat(events, hasItem(loggedMessage("       2.0.0 : Brand new migration")));
         assertThat(events, hasItem(loggedMessage("          Tags: [ Pending ]")));
         assertThat(events, hasItem(loggedMessage("       2.0.0.1 : I will always fail")));
         assertThat(events, hasItem(loggedMessage("          Tags: [ Pending ]")));
     }
 
+    private String toTimeStamp(String timeStamp) {
+        return DateTime.parse(timeStamp).toDateTime(DateTimeZone.getDefault()).toString("yyyy-MM-dd HH:mm:ss");
+    }
+
     @SuppressWarnings("unchecked")
     private void validateMigrations(TypeSafeMatcher<Migration>... migrations) {
         List<Migration> records = new ArrayList<>();
-        jongo.getCollection(SCHEMA_VERSION_COLLECTION).find().as(Migration.class).forEach(m -> records.add(m));
+        jongo.getCollection(SCHEMA_VERSION_COLLECTION).find().as(Migration.class).forEach(records::add);
         assertThat(records.size(), is(migrations.length));
         for (TypeSafeMatcher<Migration> checker : migrations)
             assertThat(records, hasItem(checker));
