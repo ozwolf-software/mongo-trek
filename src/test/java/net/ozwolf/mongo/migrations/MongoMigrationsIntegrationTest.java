@@ -66,10 +66,10 @@ public class MongoMigrationsIntegrationTest {
     @Test
     public void shouldRetryFailedMigrationsAndApplyNewOnesAndCompleteSuccessfully() throws MongoMigrationsFailureException {
         List<MigrationCommand> commands = commands(
-                new Migration100(),
-                new Migration200(),
-                new Migration102(),
-                new Migration101()
+                new V1_0_0__AppliedMigration(),
+                new V2_0_0__BrandNewMigration(),
+                new V1_0_2__FailedLastTimeMigration(),
+                new V1_0_1__AnotherAppliedMigration()
         );
 
         MongoMigrations migrations = new MongoMigrations(dbFactory());
@@ -105,7 +105,7 @@ public class MongoMigrationsIntegrationTest {
     public void shouldHandleZeroPendingMigrations() throws MongoMigrationsFailureException {
         MongoMigrations migrations = new MongoMigrations(dbFactory());
         migrations.setSchemaVersionCollection(SCHEMA_VERSION_COLLECTION);
-        migrations.migrate(commands(new Migration100()));
+        migrations.migrate(commands(new V1_0_0__AppliedMigration()));
 
         verify(appender, atLeastOnce()).doAppend(captor.capture());
 
@@ -133,11 +133,11 @@ public class MongoMigrationsIntegrationTest {
     @Test
     public void shouldFailMigrationsOnLastMigration() {
         List<MigrationCommand> commands = commands(
-                new Migration100(),
-                new Migration200(),
-                new Migration2001(),
-                new Migration102(),
-                new Migration101()
+                new V1_0_0__AppliedMigration(),
+                new V2_0_0__BrandNewMigration(),
+                new V2_0_0_1__IWillAlwaysFail(),
+                new V1_0_2__FailedLastTimeMigration(),
+                new V1_0_1__AnotherAppliedMigration()
         );
 
         try {
@@ -185,11 +185,11 @@ public class MongoMigrationsIntegrationTest {
     @Test
     public void shouldReportOnMigrations() throws MongoMigrationsFailureException {
         List<MigrationCommand> commands = commands(
-                new Migration100(),
-                new Migration200(),
-                new Migration2001(),
-                new Migration102(),
-                new Migration101()
+                new V1_0_0__AppliedMigration(),
+                new V2_0_0__BrandNewMigration(),
+                new V2_0_0_1__IWillAlwaysFail(),
+                new V1_0_2__FailedLastTimeMigration(),
+                new V1_0_1__AnotherAppliedMigration()
         );
 
         MongoMigrations migrations = new MongoMigrations(dbFactory());
@@ -237,24 +237,21 @@ public class MongoMigrationsIntegrationTest {
         return () -> FONGO.getMongo().getDB("migration_test");
     }
 
-    @MongoMigration(version = "1.0.0", description = "Applied migration")
-    public static class Migration100 implements MigrationCommand {
+    public static class V1_0_0__AppliedMigration extends MigrationCommand {
         @Override
         public void migrate(Jongo jongo) {
             throw new UnsupportedOperationException("This should never be called!");
         }
     }
 
-    @MongoMigration(version = "1.0.1", description = "Another applied migration")
-    public static class Migration101 implements MigrationCommand {
+    public static class V1_0_1__AnotherAppliedMigration extends MigrationCommand {
         @Override
         public void migrate(Jongo jongo) {
             throw new UnsupportedOperationException("This should never be called!");
         }
     }
 
-    @MongoMigration(version = "1.0.2", description = "Failed last time migration")
-    public static class Migration102 implements MigrationCommand {
+    public static class V1_0_2__FailedLastTimeMigration extends MigrationCommand {
         @Override
         public void migrate(Jongo jongo) {
             jongo.getCollection("first_migrations").insert("{'name': 'Homer Simpson', 'age': 37}");
@@ -262,8 +259,7 @@ public class MongoMigrationsIntegrationTest {
         }
     }
 
-    @MongoMigration(version = "2.0.0", description = "Brand new migration")
-    public static class Migration200 implements MigrationCommand {
+    public static class V2_0_0__BrandNewMigration extends MigrationCommand {
         @Override
         public void migrate(Jongo jongo) {
             jongo.getCollection("second_migrations").insert("{'town': 'Springfield', 'country': 'United States'}");
@@ -271,8 +267,7 @@ public class MongoMigrationsIntegrationTest {
         }
     }
 
-    @MongoMigration(version = "2.0.0.1", description = "I will always fail")
-    public static class Migration2001 implements MigrationCommand {
+    public static class V2_0_0_1__IWillAlwaysFail extends MigrationCommand {
         @Override
         public void migrate(Jongo jongo) {
             throw new IllegalArgumentException("This is an exception that never ends!");

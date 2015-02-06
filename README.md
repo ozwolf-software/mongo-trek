@@ -37,6 +37,7 @@ For example:
 
 ```java
 public class V1_0_0__MyFirstMigration extends MigrationCommand {
+    @Override
     public void migrate(Jongo jongo) {
         jongo.getCollection("cities").insert("{'city': 'Sydney', 'country': 'Australia'}");
         jongo.getCollection("cities").insert("{'city': 'Melbourne', 'country': 'Australia'}");

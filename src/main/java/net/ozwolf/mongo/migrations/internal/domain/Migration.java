@@ -12,7 +12,6 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import net.ozwolf.mongo.migrations.MigrationCommand;
-import net.ozwolf.mongo.migrations.MongoMigration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.joda.time.DateTime;

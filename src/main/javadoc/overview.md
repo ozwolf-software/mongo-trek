@@ -17,28 +17,27 @@ To create the JAR, simply run `mvn clean package`
 
 ### Define Your Migrations
 
-Migrations require to be two components:
+Migrations need to extend the Migration command and be named as such `V<version>__<name>`.
 
-1. Implement the `MigrationCommand` interface
-2. Be annotated with the `{@literal @}MongoMigration` annotation describing version information
+For example, `V1_0_0__MyFirstMigration` will be interpreted as version `1.0.0` with a description of `My first migration`.
 
 For example:
 
 ```java
-{@literal @}MongoMigration(version = "1.0.0", description = "My first migration")
-public class MyFirstMigration implements MigrationCommand {
+public class V1_0_0__MyFirstMigration extends MigrationCommand {
+    {@literal @}Override
     public void migrate(Jongo jongo) {
-        jongo.getCollection("cities").insert("{'city': 'Sydney', 'country': 'Australia'});
-        jongo.getCollection("cities").insert("{'city': 'Melbourne', 'country': 'Australia'});
-        jongo.getCollection("cities").insert("{'city': 'London', 'country': 'United Kingdom'});
-        jongo.getCollection("cities").insert("{'city': 'New York', 'country': 'United States'});
+        jongo.getCollection("cities").insert("{'city': 'Sydney', 'country': 'Australia'}");
+        jongo.getCollection("cities").insert("{'city': 'Melbourne', 'country': 'Australia'}");
+        jongo.getCollection("cities").insert("{'city': 'London', 'country': 'United Kingdom'}");
+        jongo.getCollection("cities").insert("{'city': 'New York', 'country': 'United States'}");
     }
 }
 ```
 
 ### Running Your Migrations
 
-This tool is meant to be run as part of your application's startup process (similar in theme to the (Flyway)[http://flywaydb.org] toolset for MySQL in Java).  First, create a Mongo DB object that is a connection to your schema then create a `MongoMigrations` instance.  Finally, pass in your initialized command objects to the `migrate` command.
+This tool is meant to be run as part of your application's startup process (similar in theme to the [Flyway](http://flywaydb.org) toolset for MySQL in Java).  First, create a Mongo DB object that is a connection to your schema then create a `MongoMigrations` instance.  Finally, pass in your initialized command objects to the `migrate` command.
   
 Commands passed to the `MongoMigrations` object must be instantiated.  This approach has been taken to allow you to define _how_ you instantiate your commands yourself (ie. Spring, Guice, etc.)
 
@@ -47,16 +46,12 @@ For example:
 ```java
 public class MyApplication {
     public void start(){
-        MongoClientUri uri = new MongoClientUri("mongo://localhost:27017/my_application_schema");
-        Mongo mongo = new MongoClient(uri);
-        DB db = mongo.getDatabase(uri.getDatabase());
-        
         List<MongoCommand> commands = new ArrayList<>();
         commands.add(new FirstMigration());
         commands.add(new SecondMigration());
         
         try {
-            MongoMigrations migrations = new MongoMigrations(db);
+            MongoMigrations migrations = new MongoMigrations("mongo://localhost:27017/my_application_schema");
             migrations.setSchemaVersionCollection("_my_custom_schema_version");
             migrations.migrate(commands);
         } catch (MongoMigrationsFailureException e) {
@@ -68,7 +63,7 @@ public class MyApplication {
 
 ### Logging Configuration
 
-Java Mongo Migrations uses the (LOGBack)[http://logback.qos.ch] project log outputs.
+Java Mongo Migrations uses the [LOGBack](http://logback.qos.ch) project log outputs.
 
 The logger in question is the `MongoMigrations` class logger (ie. `Logger migrationsLogger = LoggerFactory.getLogger(MongoMigrations.class);`)
 
@@ -78,3 +73,10 @@ Messages are logged via the following levels:
 
 + `INFO` - All migration information (ie. configuration, versions, migration information)
 + `ERROR` - If an error occurs (ie. invalid migration command definition or general connection/execution errors)
+
+## Acknowledgements
+
++ [Jongo](http://jongo.org)
++ [Fongo](https://github.com/foursquare/fongo)
++ [LOGBack](http://logback.qos.ch)
++ [Flyway](http://flywaydb.org) _for inspiration_

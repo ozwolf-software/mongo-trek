@@ -1,9 +1,7 @@
 package net.ozwolf.mongo.migrations.internal.service;
 
 import net.ozwolf.mongo.migrations.MigrationCommand;
-import net.ozwolf.mongo.migrations.MongoMigration;
 import net.ozwolf.mongo.migrations.exception.DuplicateVersionException;
-import net.ozwolf.mongo.migrations.exception.MissingAnnotationException;
 import net.ozwolf.mongo.migrations.internal.dao.SchemaVersionDAO;
 import net.ozwolf.mongo.migrations.internal.domain.Migration;
 
@@ -26,14 +24,14 @@ public class MigrationsService {
         return this.schemaVersionDAO.findLastSuccessful();
     }
 
-    public List<Migration> getPendingMigrations(Collection<MigrationCommand> commands) throws MissingAnnotationException, DuplicateVersionException {
+    public List<Migration> getPendingMigrations(Collection<MigrationCommand> commands) throws DuplicateVersionException {
         if (commands.isEmpty()) return new ArrayList<>();
 
         List<Migration> alreadyRun = schemaVersionDAO.findAll();
 
         List<Migration> commandMigrations = commands
                 .stream()
-                .map(asMigration())
+                .map(Migration::new)
                 .collect(toList());
 
         checkForDuplicateVersions(commandMigrations);
@@ -45,12 +43,12 @@ public class MigrationsService {
                 .collect(toList());
     }
 
-    public List<Migration> getFullState(Collection<MigrationCommand> commands) throws MissingAnnotationException, DuplicateVersionException {
+    public List<Migration> getFullState(Collection<MigrationCommand> commands) throws DuplicateVersionException {
         List<Migration> alreadyRun = schemaVersionDAO.findAll();
 
         List<Migration> commandMigrations = commands
                 .stream()
-                .map(asMigration())
+                .map(Migration::new)
                 .collect(toList());
 
         checkForDuplicateVersions(commandMigrations);
@@ -81,13 +79,4 @@ public class MigrationsService {
         };
     }
 
-    private static Function<MigrationCommand, Migration> asMigration() {
-        return command -> {
-            MongoMigration annotation = command.getClass().getAnnotation(MongoMigration.class);
-            if (annotation == null)
-                throw new MissingAnnotationException(command.getClass());
-
-            return new Migration(annotation, command);
-        };
-    }
 }

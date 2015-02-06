@@ -1,9 +1,7 @@
 package net.ozwolf.mongo.migrations.internal.service;
 
 import net.ozwolf.mongo.migrations.MigrationCommand;
-import net.ozwolf.mongo.migrations.MongoMigration;
 import net.ozwolf.mongo.migrations.exception.DuplicateVersionException;
-import net.ozwolf.mongo.migrations.exception.MissingAnnotationException;
 import net.ozwolf.mongo.migrations.internal.dao.SchemaVersionDAO;
 import net.ozwolf.mongo.migrations.internal.domain.Migration;
 import net.ozwolf.mongo.migrations.internal.domain.MigrationStatus;
@@ -38,10 +36,10 @@ public class MigrationsServiceTest {
         when(schemaVersionDAO.findAll()).thenReturn(previouslyRun);
 
         List<MigrationCommand> commands = commands(
-                new CommandOne(),
-                new CommandTwo(),
-                new CommandFour(),
-                new CommandThree()
+                new V1_0_0__FirstMigration(),
+                new V1_0_1__SecondMigration(),
+                new V2_0_0__FourthMigration(),
+                new V1_0_2__ThirdMigration()
         );
 
         List<Migration> pendingMigrations = new MigrationsService(schemaVersionDAO).getPendingMigrations(commands);
@@ -62,10 +60,10 @@ public class MigrationsServiceTest {
         when(schemaVersionDAO.findAll()).thenReturn(previouslyRun);
 
         List<MigrationCommand> commands = commands(
-                new CommandOne(),
-                new CommandTwo(),
-                new CommandFour(),
-                new CommandThree()
+                new V1_0_0__FirstMigration(),
+                new V1_0_1__SecondMigration(),
+                new V2_0_0__FourthMigration(),
+                new V1_0_2__ThirdMigration()
         );
 
         List<Migration> migrations = new MigrationsService(schemaVersionDAO).getFullState(commands);
@@ -82,28 +80,13 @@ public class MigrationsServiceTest {
         when(schemaVersionDAO.findAll()).thenReturn(migrations());
 
         List<MigrationCommand> commands = commands(
-                new CommandFour(),
-                new CommandThree(),
-                new DuplicateCommandFour()
+                new V2_0_0__FourthMigration(),
+                new V1_0_2__ThirdMigration(),
+                new V2_0_0__DuplicateMigration()
         );
 
         exception.expect(DuplicateVersionException.class);
         exception.expectMessage("Migration [ 2.0.0 ] has duplicate commands.");
-        new MigrationsService(schemaVersionDAO).getPendingMigrations(commands);
-    }
-
-    @Test
-    public void shouldThrowMissingAnnotationException() throws Throwable {
-        when(schemaVersionDAO.findAll()).thenReturn(migrations());
-
-        List<MigrationCommand> commands = commands(
-                new CommandFour(),
-                new CommandThree(),
-                new MissingAnnotationCommand()
-        );
-
-        exception.expect(MissingAnnotationException.class);
-        exception.expectMessage("Migration command [ MissingAnnotationCommand ] is missing the [ @MongoMigration ] annotation.");
         new MigrationsService(schemaVersionDAO).getPendingMigrations(commands);
     }
 
@@ -126,42 +109,31 @@ public class MigrationsServiceTest {
         return Arrays.asList(commands);
     }
 
-    @MongoMigration(version = "1.0.0", description = "First migration")
-    public static class CommandOne implements MigrationCommand {
+    public static class V1_0_0__FirstMigration extends MigrationCommand {
         @Override
         public void migrate(Jongo jongo) {
         }
     }
 
-    @MongoMigration(version = "1.0.1", description = "Second migration")
-    public static class CommandTwo implements MigrationCommand {
+    public static class V1_0_1__SecondMigration extends MigrationCommand {
         @Override
         public void migrate(Jongo jongo) {
         }
     }
 
-    @MongoMigration(version = "1.0.2", description = "Third migration")
-    public static class CommandThree implements MigrationCommand {
+    public static class V1_0_2__ThirdMigration extends MigrationCommand {
         @Override
         public void migrate(Jongo jongo) {
         }
     }
 
-    @MongoMigration(version = "2.0.0", description = "Fourth migration")
-    public static class CommandFour implements MigrationCommand {
+    public static class V2_0_0__FourthMigration extends MigrationCommand {
         @Override
         public void migrate(Jongo jongo) {
         }
     }
 
-    @MongoMigration(version = "2.0.0", description = "Duplicate migration")
-    public static class DuplicateCommandFour implements MigrationCommand {
-        @Override
-        public void migrate(Jongo jongo) {
-        }
-    }
-
-    public static class MissingAnnotationCommand implements MigrationCommand {
+    public static class V2_0_0__DuplicateMigration extends MigrationCommand {
         @Override
         public void migrate(Jongo jongo) {
         }

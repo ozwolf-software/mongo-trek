@@ -32,13 +32,15 @@ public abstract class MigrationCommand {
     public abstract void migrate(Jongo jongo);
 
     private static String makeDescriptionFrom(String value) {
-        return value.replaceAll(
-                String.format("%s|%s|%s",
-                        "(?<=[A-Z])(?=[A-Z][a-z])",
-                        "(?<=[^A-Z])(?=[A-Z])",
-                        "(?<=[A-Za-z])(?=[^A-Za-z])"
-                ),
-                " "
+        return StringUtils.capitalize(
+                value.replaceAll(
+                        String.format("%s|%s|%s",
+                                "(?<=[A-Z])(?=[A-Z][a-z])",
+                                "(?<=[^A-Z])(?=[A-Z])",
+                                "(?<=[A-Za-z])(?=[^A-Za-z])"
+                        ),
+                        " "
+                ).toLowerCase()
         );
     }
 }
