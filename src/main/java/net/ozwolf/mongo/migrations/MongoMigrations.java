@@ -22,7 +22,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * # Mongo Migrations
+ * <h1>Mongo Migrations</h1>
  *
  * The Mongo Migrations class allows an application to provide its own Mongo schema connection and a collection of migration commands to be
  * executed against the schema in question.  It persists migration state in the provides schema version collection, allowing retries of failed commands
@@ -34,21 +34,21 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * ```java
  * public class MyApplication {
- * public void start(){
- * MongoClientUri uri = new MongoClientUri("mongo://root:password@localhost:27017/my_application");
+ *      public void start(){
+     *      MongoClientUri uri = new MongoClientUri("mongo://root:password@localhost:27017/my_application");
  *
- * List<MongoCommand> commands = new ArrayList<>();
- * commands.add(new FirstCommand());
- * commands.add(new SecondCommand());
+ *          List<MongoCommand> commands = new ArrayList<>();
+ *          commands.add(new V1_0_0__FirstCommand());
+ *          commands.add(new V1_0_1__SecondCommand());
  *
- * try {
- * MongoMigrations migrations = new MongoMigrations(uri);
- * migrations.setSchemaVersionCollection("_schema_version_my_application");
- * migrations.migrate(commands);
- * } catch (MongoMigrationFailureException e) {
- * LOGGER.error("Error migrating database, e);
- * }
- * }
+ *          try {
+ *              MongoMigrations migrations = new MongoMigrations(uri);
+ *              migrations.setSchemaVersionCollection("_schema_version_my_application");
+ *              migrations.migrate(commands);
+ *          } catch (MongoMigrationFailureException e) {
+ *              LOGGER.error("Error migrating database, e);
+ *          }
+ *      }
  * }
  * ```
  */

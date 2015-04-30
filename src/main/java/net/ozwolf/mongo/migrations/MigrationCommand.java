@@ -7,6 +7,26 @@ import org.jongo.Jongo;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * <h1>Migration Command</h1>
+ *
+ * The command object all migrations should extend.  Commands need to implement the `migrate` command.
+ *
+ * ## Naming Convention
+ *
+ * All migration commands should be named using the format V<version>__<description>.  For example, `public class V1_0_0__MyFirstMigration...`
+ *
+ * ## Example Usage
+ *
+ * ```java
+ * public class V2_1_0__AddUniqueEmailIndexToPersonCollection extends MigrationCommand {
+ *     {@literal @}Override
+ *     public void migrate(Jongo jongo){
+ *         jongo.getCollection("person").ensureIndex("{email: 1}", "{unique: 1, name: 'email_idx'}");
+ *     }
+ * }
+ * ```
+ */
 public abstract class MigrationCommand {
     private final String version;
     private final String description;
@@ -21,11 +41,11 @@ public abstract class MigrationCommand {
         this.description = makeDescriptionFrom(matcher.group("description"));
     }
 
-    public String getVersion() {
+    public final String getVersion() {
         return version;
     }
 
-    public String getDescription() {
+    public final String getDescription() {
         return description;
     }
 
