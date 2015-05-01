@@ -1,8 +1,13 @@
 language: java
-before_script: mvn clean buildnumber:create-timestamp versions:set -Dmaven.buildNumber.timestampFormat=yyyyMMddHHmmss -DnewVersion='${project.version}.${timestamp}'
+before_script: mvn clean buildnumber:create-timestamp versions:set -Dmaven.buildNumber.timestampFormat=yyyyMMddHHmm -DnewVersion='${project.version}.${timestamp}'
 script: mvn clean deploy
 jdk:
     - oraclejdk8
 notifications:
     email:
         - ozwolf@gmail.com
+
+env:
+  global:
+    - secure: "OhUNKXTCfzn7giQhna2WjK7puXbfpv5CCCXWHi+5H/l7HNKPM+bmuYjk47uv+JIYv76zxocVglz0NV9LGa0x1YhMD1qoWCmnnEQSrqCOG6k5eE/trcBCXAulsTft3UzF7UyyjUyRFtypdU934A4wADB/xYdRujJbXpFykJg98Zk="
+    - secure: "fz++4ynoyliZp/F946F+EA0OMX9h5+gB74Jvg4weS56H6cNlyB/iMGJJqOsCI6MfzutltBA2G/veoM9KukVrwflh2OL8hJlwbNwq77WRvSTBtWWAO0uj5d4AQhKTer7G1XZnSQEDtq/ufbont9YMzJwFPXP9SvJhvMXr9JOtKnM="

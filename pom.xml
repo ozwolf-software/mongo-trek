@@ -12,6 +12,7 @@
 
     <properties>
         <compile.version>1.8</compile.version>
+        <compile.encoding>UTF-8</compile.encoding>
 
         <!-- Runtime Libraries -->
         <mongo.version>2.12.4</mongo.version>
@@ -41,7 +42,7 @@
         <repository>
             <id>bintray-releases</id>
             <name>bintray releases</name>
-            <url>https://dl.bintray.com/ozwolf-software/maven/java-mongo-migrations</url>
+            <url>https://api.bintray.com/maven/ozwolf-software/maven/java-mongo-migrations</url>
         </repository>
     </distributionManagement>
 
@@ -133,6 +134,7 @@
                 <configuration>
                     <source>${compile.version}</source>
                     <target>${compile.version}</target>
+                    <encoding>${compile.encoding}</encoding>
                 </configuration>
             </plugin>
             <plugin>
