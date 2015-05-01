@@ -3,7 +3,7 @@
         <server>
             <id>bintray-releases</id>
             <username>${env.BINTRAY_USERNAME}</username>
-            <password>${env.BINTRAY_PASSWORD}</password>
+            <password>${env.BINTRAY_APIKEY}</password>
         </server>
     </servers>
 </settings>
