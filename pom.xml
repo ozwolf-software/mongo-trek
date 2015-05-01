@@ -6,7 +6,7 @@
 
     <groupId>net.ozwolf</groupId>
     <artifactId>java-mongo-migrations</artifactId>
-    <version>3.0.0</version>
+    <version>3.1</version>
     <name>Java Mongo Migrations (Java 1.8)</name>
     <description>Mongo migrations tool that allows in-code migrations via the Jongo library.</description>
 
@@ -36,6 +36,14 @@
             <url>http://repo.bodar.com</url>
         </repository>
     </repositories>
+
+    <distributionManagement>
+        <repository>
+            <id>bintray-releases</id>
+            <name>bintray releases</name>
+            <url>https://dl.bintray.com/ozwolf-software/maven/java-mongo-migrations</url>
+        </repository>
+    </distributionManagement>
 
     <dependencies>
         <!-- Runtime Libraries -->

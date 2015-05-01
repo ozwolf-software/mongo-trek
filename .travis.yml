@@ -1,5 +1,6 @@
 language: java
-script: mvn clean verify
+before_script: mvn clean buildnumber:create-timestamp versions:set -Dmaven.buildNumber.timestampFormat=yyyyMMddHHmmss -DnewVersion=${project.version}.${timestamp}
+script: mvn clean deploy
 jdk:
     - oraclejdk8
 notifications:
