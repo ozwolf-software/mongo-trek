@@ -38,14 +38,6 @@
         </repository>
     </repositories>
 
-    <distributionManagement>
-        <repository>
-            <id>bintray-releases</id>
-            <name>bintray releases</name>
-            <url>https://api.bintray.com/maven/ozwolf-software/maven/java-mongo-migrations</url>
-        </repository>
-    </distributionManagement>
-
     <dependencies>
         <!-- Runtime Libraries -->
         <dependency>
