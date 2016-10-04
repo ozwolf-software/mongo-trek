@@ -15,7 +15,6 @@ import org.jongo.Jongo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -34,21 +33,21 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * ```java
  * public class MyApplication {
- *      public void start(){
-     *      MongoClientUri uri = new MongoClientUri("mongo://root:password@localhost:27017/my_application");
+ * public void start(){
+ * MongoClientUri uri = new MongoClientUri("mongo://root:password@localhost:27017/my_application");
  *
- *          List<MongoCommand> commands = new ArrayList<>();
- *          commands.add(new V1_0_0__FirstCommand());
- *          commands.add(new V1_0_1__SecondCommand());
+ * List<MongoCommand> commands = new ArrayList<>();
+ * commands.add(new V1_0_0__FirstCommand());
+ * commands.add(new V1_0_1__SecondCommand());
  *
- *          try {
- *              MongoMigrations migrations = new MongoMigrations(uri);
- *              migrations.setSchemaVersionCollection("_schema_version_my_application");
- *              migrations.migrate(commands);
- *          } catch (MongoMigrationFailureException e) {
- *              LOGGER.error("Error migrating database, e);
- *          }
- *      }
+ * try {
+ * MongoMigrations migrations = new MongoMigrations(uri);
+ * migrations.setSchemaVersionCollection("_schema_version_my_application");
+ * migrations.migrate(commands);
+ * } catch (MongoMigrationFailureException e) {
+ * LOGGER.error("Error migrating database, e);
+ * }
+ * }
  * }
  * ```
  */
@@ -191,12 +190,8 @@ public class MongoMigrations {
     }
 
     private DB connectTo(final MongoClientURI uri) {
-        try {
-            Mongo mongo = new MongoClient(uri);
-            return mongo.getDB(uri.getDatabase());
-        } catch (UnknownHostException e) {
-            throw new RuntimeException(e);
-        }
+        Mongo mongo = new MongoClient(uri);
+        return mongo.getDB(uri.getDatabase());
     }
 
     private MigrationsService migrationsService() {

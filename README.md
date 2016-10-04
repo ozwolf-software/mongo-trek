@@ -6,24 +6,43 @@ This library is designed to allow tracked Mongo schema migrations inside a Java 
 
 This library utilises the [Jongo](http://jongo.org) library for executing migrations against the Mongo database schema, while keeping track of migration state.
  
-## Compile and Install
+## Dependency
 
-To use this library, clone it locally and run either of the following commands:
+```xml
+<dependency>
+    <groupId>net.ozwolf</groupId>
+    <artifactId>java-mongo-migrations</artifactId>
+    <version>4.0.0</version>
+</dependency>
+```
 
-+ Local Repository: `mvn clean install`
-+ Shared Repository: `mvn clean package` the upload into your shared repository.
+### Provided Dependencies
 
-To create the JAR, simply run `mvn clean package`
+As part of your own project, you will need to include the following dependencies:
 
-### Java 7 Version
+#### Mongo Java Driver
 
-For a Java 7 compilable version, see the `legacy-java7` branch.  The main reason for this is that Java 7 does not have the `Stream` object available and we use the `TotallyLazy` library to achieve this.
- 
-As of Java 8, the `Stream` object means we do not need the TotallyLazy library.
+Build Version: `3.3.0`
 
-The Java 7 version is not maintained.
+```xml
+<dependency>
+    <groupId>org.mongodb</groupId>
+    <artifactId>mongo-java-driver</artifactId>
+    <version>[3.3.0,)</version>
+</dependency>
+```
 
-The version number for the Java 7 version is suffixed with `-jdk7`. 
+#### Jongo
+
+Build Version: `1.3.0`
+
+```xml
+<dependency>
+    <groupId>org.jongo</groupId>
+    <artifactId>jongo</artifactId>
+    <version>[1.3,)</version>
+</dependency>
+```
 
 ## Usage
 

@@ -1,17 +1,48 @@
-# ${project.name} - ${project.version}
+# Java Mongo Migrations
+
+[![Build Status](https://travis-ci.org/ozwolf-software/java-mongo-migrations.svg?branch=master)](https://travis-ci.org/ozwolf-software/java-mongo-migrations)
 
 This library is designed to allow tracked Mongo schema migrations inside a Java application, creating the ability to write code-based database migrations utilising your own Java driver connection to achieve this.
 
 This library utilises the [Jongo](http://jongo.org) library for executing migrations against the Mongo database schema, while keeping track of migration state.
  
-## Compile and Install
+## Dependency
 
-To use this library, clone it locally and run either of the following commands:
+```xml
+<dependency>
+    <groupId>net.ozwolf</groupId>
+    <artifactId>java-mongo-migrations</artifactId>
+    <version>4.0.0</version>
+</dependency>
+```
 
-+ Local Repository: `mvn clean install`
-+ Central Repository: `mvn clean deploy`
+### Provided Dependencies
 
-To create the JAR, simply run `mvn clean package`
+As part of your own project, you will need to include the following dependencies:
+
+#### Mongo Java Driver
+
+Build Version: `3.3.0`
+
+```xml
+<dependency>
+    <groupId>org.mongodb</groupId>
+    <artifactId>mongo-java-driver</artifactId>
+    <version>[3.3.0,)</version>
+</dependency>
+```
+
+#### Jongo
+
+Build Version: `1.3.0`
+
+```xml
+<dependency>
+    <groupId>org.jongo</groupId>
+    <artifactId>jongo</artifactId>
+    <version>[1.3,)</version>
+</dependency>
+```
 
 ## Usage
 

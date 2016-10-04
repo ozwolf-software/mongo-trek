@@ -1,8 +1,25 @@
 language: java
-before_script: mvn clean buildnumber:create-timestamp versions:set -Dmaven.buildNumber.timestampFormat=yyyyMMddHHmm -DnewVersion='${project.version}.${timestamp}'
-script: mvn clean verify
+
 jdk:
-    - oraclejdk8
+- oraclejdk8
+
 notifications:
-    email:
-        - ozwolf@gmail.com
+  email:
+  - ozwolf@gmail.com
+
+env:
+  global:
+  - GPG_DIR="`pwd`/gpg"
+  - secure: Ih1a3Ry48K+LAIlklbAfYOKNvwDv9fWpakVP7KhUy6axq0k+RW0ujOD8v3duCFL0pp8uBdr1cfmsdcv1d/0uFOeWWvr6qIi3v6xKfaDPpgOw6lLy51Un+p3Yl1nU/UhrWzvmXRRW3p+G5bS4iKRYbcSaU0Wn8dDdm87YKSDUXPM=
+  - secure: y0YXl5buNiMP3eoJrLZvl+d2PYAMOWVCRVj7jnL70/IjuqIpg+WhWqWXRRbyjIJqJFoJWENxY6kmJ2IHG5t0f3PBjVk6OwQHCAIn3BXBL7yk4RRN/hBI6xR6PmaOJUIvsIj3AAGL66yJ1ul+y93s58sZv9c4r3cL29y8aPE8/Yo=
+  - secure: l01QuCqffnnIzypKnJu360vvpOkbPrLPE9bkxNsPTfnu9LJuRoGsvjaCLRikM/Lg4Yvvr8N5bQjljguNh3t3OK0y44L+jinH+u8mXWCOPe6mIxB18Cds1YFFCXyVlGNLZXpRkPlsweltBgz+je1ireBnSGxkGtPn/4GROWTxA8A=
+  - secure: uJG5vdzHDGatpZ/vx4Og7v1K2Cj/SxBR2JASOi+l36WW5D8pI2BRYvIetyCLVtXwwwFBiHFPATL4XK/1lzeKru8GR62H3w7IYGefV64GBas8QvKGMYde1sOgraARKpVfnJZWbfzaPl/uZqfwAJwX2eIN40Fkg3/xwaT7UkiVk4Q=
+  - secure: Sr9oaCdj6S3cEPkf8DCZgQ81O/EcG2TMB0VlQM3pNqBSZcYC1pvYx2oAI+g0xYBbm4qKXK6y9Gn7wq4Ws0PQRnoIzD6LyYOqr5oiwZXwByI0ACFNZ2vcNwbXmWuqHvMV3XvKiaFafOb+ASzmNDjc5tVsOeZ1i0eOYIRLD2BXqZ8=
+
+before_script:
+  - openssl aes-256-cbc -pass pass:$ENCRYPTION_PASSWORD -in $GPG_DIR/pubring.gpg.enc -out $GPG_DIR/pubring.gpg -d
+  - openssl aes-256-cbc -pass pass:$ENCRYPTION_PASSWORD -in $GPG_DIR/secring.gpg.enc -out $GPG_DIR/secring.gpg -d
+
+script:
+  - mvn -P ossrh clean source:jar deploy --settings travis-settings.xml
+
