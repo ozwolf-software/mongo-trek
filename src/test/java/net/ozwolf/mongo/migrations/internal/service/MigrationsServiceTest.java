@@ -5,6 +5,7 @@ import net.ozwolf.mongo.migrations.exception.DuplicateVersionException;
 import net.ozwolf.mongo.migrations.internal.dao.SchemaVersionDAO;
 import net.ozwolf.mongo.migrations.internal.domain.Migration;
 import net.ozwolf.mongo.migrations.internal.domain.MigrationStatus;
+import net.ozwolf.mongo.migrations.internal.domain.MigrationsState;
 import org.joda.time.DateTime;
 import org.jongo.Jongo;
 import org.junit.Rule;
@@ -26,7 +27,7 @@ public class MigrationsServiceTest {
     public ExpectedException exception = ExpectedException.none();
 
     @Test
-    public void shouldReturnPendingMigrationCommandsOnly() throws Throwable {
+    public void shouldReturnPendingStateFromMigrationState() throws Throwable {
         Migration previous1 = record("1.0.0", MigrationStatus.Successful);
         Migration previous2 = record("1.0.1", MigrationStatus.Successful);
         Migration previous3 = record("1.0.2", MigrationStatus.Failed);
@@ -42,11 +43,13 @@ public class MigrationsServiceTest {
                 new V1_0_2__ThirdMigration()
         );
 
-        List<Migration> pendingMigrations = new MigrationsService(schemaVersionDAO).getPendingMigrations(commands);
+        MigrationsState.Pending pendingMigrations = new MigrationsService(schemaVersionDAO).getState(commands).getPending();
 
-        assertThat(pendingMigrations.size(), is(2));
-        assertThat(pendingMigrations.get(0).getVersion(), is("1.0.2"));
-        assertThat(pendingMigrations.get(1).getVersion(), is("2.0.0"));
+        assertThat(pendingMigrations.getMigrations().size(), is(2));
+        assertThat(pendingMigrations.getNextPendingVersion(), is("1.0.2"));
+        assertThat(pendingMigrations.getLastPendingVersion(), is("2.0.0"));
+        assertThat(pendingMigrations.getMigrations().get(0).getVersion(), is("1.0.2"));
+        assertThat(pendingMigrations.getMigrations().get(1).getVersion(), is("2.0.0"));
     }
 
     @Test
@@ -66,7 +69,7 @@ public class MigrationsServiceTest {
                 new V1_0_2__ThirdMigration()
         );
 
-        List<Migration> migrations = new MigrationsService(schemaVersionDAO).getFullState(commands);
+        List<Migration> migrations = new MigrationsService(schemaVersionDAO).getState(commands).getMigrations();
 
         assertThat(migrations.size(), is(4));
         assertThat(migrations.get(0).getVersion(), is("1.0.0"));
@@ -87,7 +90,7 @@ public class MigrationsServiceTest {
 
         exception.expect(DuplicateVersionException.class);
         exception.expectMessage("Migration [ 2.0.0 ] has duplicate commands.");
-        new MigrationsService(schemaVersionDAO).getPendingMigrations(commands);
+        new MigrationsService(schemaVersionDAO).getState(commands);
     }
 
     private Migration record(String version, MigrationStatus status) {

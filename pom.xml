@@ -6,7 +6,7 @@
 
     <groupId>net.ozwolf</groupId>
     <artifactId>java-mongo-migrations</artifactId>
-    <version>4.0.0</version>
+    <version>4.1.0</version>
     <name>Java Mongo Migrations</name>
     <description>Mongo migrations tool that allows in-code migrations via the Jongo library.</description>
     <url>https://github.com/ozwolf-software/java-mongo-migrations</url>
@@ -221,7 +221,7 @@
                                         <limit implementation="org.jacoco.report.check.Limit">
                                             <counter>INSTRUCTION</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.90</minimum>
+                                            <minimum>0.89</minimum>
                                         </limit>
                                     </limits>
                                 </rule>

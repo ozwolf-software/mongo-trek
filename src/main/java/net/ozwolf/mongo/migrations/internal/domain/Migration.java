@@ -21,6 +21,7 @@ import org.jongo.marshall.jackson.oid.Id;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,7 +39,7 @@ public class Migration {
     private String failureMessage;
 
     @JsonIgnore
-    private Optional<MigrationCommand> command;
+    private MigrationCommand command;
 
     @JsonCreator
     public Migration(@JsonProperty("_id") String version,
@@ -57,7 +58,7 @@ public class Migration {
 
     public Migration(MigrationCommand command) {
         this(command.getVersion(), command.getDescription(), null, null, MigrationStatus.Pending, null);
-        this.command = Optional.of(command);
+        this.command = command;
     }
 
     public String getVersion() {
@@ -98,11 +99,11 @@ public class Migration {
     }
 
     public MigrationCommand getCommand() {
-        return command.orElseThrow(() -> new IllegalStateException(String.format("No command attached to migration [ %s ]", version)));
+        return Optional.ofNullable(command).orElseThrow(() -> new IllegalStateException(String.format("No command attached to migration [ %s ]", version)));
     }
 
     public Migration assign(MigrationCommand command) {
-        this.command = Optional.of(command);
+        this.command = command;
         return this;
     }
 
@@ -158,5 +159,13 @@ public class Migration {
             if (parser.getValueAsString() == null) return null;
             return DateTime.parse(parser.getValueAsString(), DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSSZ"));
         }
+    }
+
+    public static Comparator<Migration> sortByVersionAscending() {
+        return (m1, m2) -> m1.getComparableVersion().compareTo(m2.getComparableVersion());
+    }
+
+    public static Comparator<Migration> sortByVersionDescending() {
+        return (m1, m2) -> m2.getComparableVersion().compareTo(m1.getComparableVersion());
     }
 }

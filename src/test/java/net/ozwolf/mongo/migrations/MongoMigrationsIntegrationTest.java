@@ -23,6 +23,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static net.ozwolf.mongo.migrations.matchers.LoggingMatchers.loggedMessage;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -64,41 +65,15 @@ public class MongoMigrationsIntegrationTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    public void shouldRetryFailedMigrationsAndApplyNewOnesAndCompleteSuccessfully() throws MongoMigrationsFailureException {
-        List<MigrationCommand> commands = commands(
-                new V1_0_0__AppliedMigration(),
-                new V2_0_0__BrandNewMigration(),
-                new V1_0_2__FailedLastTimeMigration(),
-                new V1_0_1__AnotherAppliedMigration()
-        );
+    public void shouldRetryFailedMigrationsAndApplyNewOnesAndCompleteSuccessfullyUsingDBFactory() throws MongoMigrationsFailureException {
+        testApplyingMigrations(() -> new MongoMigrations(dbFactory()));
+    }
 
-        MongoMigrations migrations = new MongoMigrations(dbFactory());
-        migrations.setSchemaVersionCollection(SCHEMA_VERSION_COLLECTION);
-        migrations.migrate(commands);
+    @Test
+    public void shouldRetryFailedMigrationsAndApplyNewOnesAndCompleteSuccessfullyAndLeaveConnectionOpen() throws MongoMigrationsFailureException {
+        testApplyingMigrations(() -> new MongoMigrations(this.jongo));
 
-        validateMigrations(
-                migrationOf("1.0.0", MigrationStatus.Successful),
-                migrationOf("1.0.1", MigrationStatus.Successful),
-                migrationOf("1.0.2", MigrationStatus.Successful),
-                migrationOf("2.0.0", MigrationStatus.Successful)
-        );
-
-        assertThat(jongo.getCollection("first_migrations").findOne("{'name':'Homer Simpson'}").map(r -> (Integer) r.get("age")), is(37));
-        assertThat(jongo.getCollection("second_migrations").findOne("{'town':'Shelbyville'}").map(r -> (String) r.get("country")), is("United States"));
-
-        verify(appender, atLeastOnce()).doAppend(captor.capture());
-
-        List<ILoggingEvent> events = captor.getAllValues();
-        assertThat(events, hasItem(loggedMessage("DATABASE MIGRATIONS")));
-        assertThat(events, hasItem(loggedMessage("       Database : [ migration_test ]")));
-        assertThat(events, hasItem(loggedMessage(" Schema Version : [ _schema_version ]")));
-        assertThat(events, hasItem(loggedMessage("         Action : [ migrate ]")));
-        assertThat(events, hasItem(loggedMessage("Current Version : [ 1.0.1 ]")));
-        assertThat(events, hasItem(loggedMessage("       Applying : [ 1.0.2 ] -> [ 2.0.0 ]")));
-        assertThat(events, hasItem(loggedMessage("     Migrations :")));
-        assertThat(events, hasItem(loggedMessage("       1.0.2 : Failed last time migration")));
-        assertThat(events, hasItem(loggedMessage("       2.0.0 : Brand new migration")));
-        assertThat(events, hasItem(loggedMessage(">>> [ 2 ] migrations applied in [ 0 seconds ] <<<")));
+        assertThat(this.jongo.getCollection(SCHEMA_VERSION_COLLECTION).count(), greaterThan(0L));
     }
 
     @Test
@@ -216,12 +191,49 @@ public class MongoMigrationsIntegrationTest {
         assertThat(events, hasItem(loggedMessage("          Tags: [ Pending ]")));
     }
 
+    private void testApplyingMigrations(Supplier<MongoMigrations> migrationsProvider) throws MongoMigrationsFailureException {
+        List<MigrationCommand> commands = commands(
+                new V1_0_0__AppliedMigration(),
+                new V2_0_0__BrandNewMigration(),
+                new V1_0_2__FailedLastTimeMigration(),
+                new V1_0_1__AnotherAppliedMigration()
+        );
+
+        MongoMigrations migrations = migrationsProvider.get();
+        migrations.setSchemaVersionCollection(SCHEMA_VERSION_COLLECTION);
+        migrations.migrate(commands);
+
+        validateMigrations(
+                migrationOf("1.0.0", MigrationStatus.Successful),
+                migrationOf("1.0.1", MigrationStatus.Successful),
+                migrationOf("1.0.2", MigrationStatus.Successful),
+                migrationOf("2.0.0", MigrationStatus.Successful)
+        );
+
+        assertThat(jongo.getCollection("first_migrations").findOne("{'name':'Homer Simpson'}").map(r -> (Integer) r.get("age")), is(37));
+        assertThat(jongo.getCollection("second_migrations").findOne("{'town':'Shelbyville'}").map(r -> (String) r.get("country")), is("United States"));
+
+        verify(appender, atLeastOnce()).doAppend(captor.capture());
+
+        List<ILoggingEvent> events = captor.getAllValues();
+        assertThat(events, hasItem(loggedMessage("DATABASE MIGRATIONS")));
+        assertThat(events, hasItem(loggedMessage("       Database : [ migration_test ]")));
+        assertThat(events, hasItem(loggedMessage(" Schema Version : [ _schema_version ]")));
+        assertThat(events, hasItem(loggedMessage("         Action : [ migrate ]")));
+        assertThat(events, hasItem(loggedMessage("Current Version : [ 1.0.1 ]")));
+        assertThat(events, hasItem(loggedMessage("       Applying : [ 1.0.2 ] -> [ 2.0.0 ]")));
+        assertThat(events, hasItem(loggedMessage("     Migrations :")));
+        assertThat(events, hasItem(loggedMessage("       1.0.2 : Failed last time migration")));
+        assertThat(events, hasItem(loggedMessage("       2.0.0 : Brand new migration")));
+        assertThat(events, hasItem(loggedMessage(">>> [ 2 ] migrations applied in [ 0 seconds ] <<<")));
+    }
+
     private String toTimeStamp(String timeStamp) {
         return DateTime.parse(timeStamp).toDateTime(DateTimeZone.getDefault()).toString("yyyy-MM-dd HH:mm:ss");
     }
 
-    @SuppressWarnings("unchecked")
-    private void validateMigrations(TypeSafeMatcher<Migration>... migrations) {
+    @SafeVarargs
+    private final void validateMigrations(TypeSafeMatcher<Migration>... migrations) {
         List<Migration> records = new ArrayList<>();
         jongo.getCollection(SCHEMA_VERSION_COLLECTION).find().as(Migration.class).forEach(records::add);
         assertThat(records.size(), is(migrations.length));
@@ -233,10 +245,13 @@ public class MongoMigrationsIntegrationTest {
         return Arrays.asList(commands);
     }
 
+
+    @SuppressWarnings("deprecation")
     private MongoMigrations.DBFactory dbFactory() {
         return () -> FONGO.getMongo().getDB("migration_test");
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static class V1_0_0__AppliedMigration extends MigrationCommand {
         @Override
         public void migrate(Jongo jongo) {
@@ -244,6 +259,7 @@ public class MongoMigrationsIntegrationTest {
         }
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static class V1_0_1__AnotherAppliedMigration extends MigrationCommand {
         @Override
         public void migrate(Jongo jongo) {
@@ -251,6 +267,7 @@ public class MongoMigrationsIntegrationTest {
         }
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static class V1_0_2__FailedLastTimeMigration extends MigrationCommand {
         @Override
         public void migrate(Jongo jongo) {
@@ -259,6 +276,7 @@ public class MongoMigrationsIntegrationTest {
         }
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static class V2_0_0__BrandNewMigration extends MigrationCommand {
         @Override
         public void migrate(Jongo jongo) {
@@ -267,6 +285,7 @@ public class MongoMigrationsIntegrationTest {
         }
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static class V2_0_0_1__IWillAlwaysFail extends MigrationCommand {
         @Override
         public void migrate(Jongo jongo) {

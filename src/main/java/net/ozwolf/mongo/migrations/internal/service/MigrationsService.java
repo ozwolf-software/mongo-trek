@@ -4,8 +4,8 @@ import net.ozwolf.mongo.migrations.MigrationCommand;
 import net.ozwolf.mongo.migrations.exception.DuplicateVersionException;
 import net.ozwolf.mongo.migrations.internal.dao.SchemaVersionDAO;
 import net.ozwolf.mongo.migrations.internal.domain.Migration;
+import net.ozwolf.mongo.migrations.internal.domain.MigrationsState;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -20,30 +20,11 @@ public class MigrationsService {
         this.schemaVersionDAO = schemaVersionDAO;
     }
 
-    public Optional<Migration> getLastSuccessful() {
-        return this.schemaVersionDAO.findLastSuccessful();
+    public MigrationsState getState(Collection<MigrationCommand> commands) {
+        return new MigrationsState(getFullState(commands));
     }
 
-    public List<Migration> getPendingMigrations(Collection<MigrationCommand> commands) throws DuplicateVersionException {
-        if (commands.isEmpty()) return new ArrayList<>();
-
-        List<Migration> alreadyRun = schemaVersionDAO.findAll();
-
-        List<Migration> commandMigrations = commands
-                .stream()
-                .map(Migration::new)
-                .collect(toList());
-
-        checkForDuplicateVersions(commandMigrations);
-
-        return commandMigrations.stream()
-                .map(joinWith(alreadyRun))
-                .filter(m -> !m.isSuccessful())
-                .sorted((m1, m2) -> m1.getComparableVersion().compareTo(m2.getComparableVersion()))
-                .collect(toList());
-    }
-
-    public List<Migration> getFullState(Collection<MigrationCommand> commands) throws DuplicateVersionException {
+    private List<Migration> getFullState(Collection<MigrationCommand> commands) throws DuplicateVersionException {
         List<Migration> alreadyRun = schemaVersionDAO.findAll();
 
         List<Migration> commandMigrations = commands
@@ -56,7 +37,6 @@ public class MigrationsService {
         return commandMigrations
                 .stream()
                 .map(joinWith(alreadyRun))
-                .sorted((m1, m2) -> m1.getComparableVersion().compareTo(m2.getComparableVersion()))
                 .collect(toList());
 
     }
