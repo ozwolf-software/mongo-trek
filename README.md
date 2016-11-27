@@ -12,7 +12,7 @@ This library utilises the [Jongo](http://jongo.org) library for executing migrat
 <dependency>
     <groupId>net.ozwolf</groupId>
     <artifactId>java-mongo-migrations</artifactId>
-    <version>4.0.0</version>
+    <version>4.1.0</version>
 </dependency>
 ```
 
