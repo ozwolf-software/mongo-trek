@@ -4,6 +4,8 @@
 
 **mongoTrek** is a a Java library inspired by [Liquibase](http://www.liquibase.org/) for managing collection and document migrations within your application's database.
 
+This library is a "roll-forward" migration tool, meaning that to rollback changes, new migrations are required to undertake this task.
+
 ## Java Mongo Migrations Upgrade
 
 mongoTrek is a fork from the [Java Mongo Migrations](https://github.com/ozwolf-software/java-mongo-migrations) project.  As such, projects that have previously managed migrations using this project can upgrade to mongoTrek and it will understand the previous migrations schema version collection documents.
