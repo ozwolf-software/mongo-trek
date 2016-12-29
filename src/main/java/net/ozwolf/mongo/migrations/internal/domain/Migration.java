@@ -1,25 +1,12 @@
 package net.ozwolf.mongo.migrations.internal.domain;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import net.ozwolf.mongo.migrations.MigrationCommand;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormat;
-import org.jongo.marshall.jackson.oid.Id;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -28,28 +15,28 @@ import java.util.Optional;
 import static org.joda.time.Seconds.secondsBetween;
 
 public class Migration {
-    @Id
     private final String version;
     private final String description;
-    @JsonSerialize(using = DateTimeSerializer.class)
+    private final String author;
     private DateTime started;
-    @JsonSerialize(using = DateTimeSerializer.class)
     private DateTime finished;
     private MigrationStatus status;
     private String failureMessage;
 
-    @JsonIgnore
     private MigrationCommand command;
 
-    @JsonCreator
-    public Migration(@JsonProperty("_id") String version,
-                     @JsonProperty("description") String description,
-                     @JsonProperty("started") @JsonDeserialize(using = DateTimeDeserializer.class) DateTime started,
-                     @JsonProperty("finished") @JsonDeserialize(using = DateTimeDeserializer.class) DateTime finished,
-                     @JsonProperty("status") MigrationStatus status,
-                     @JsonProperty("failureMessage") String failureMessage) {
+    public final static String DEFAULT_AUTHOR = "trekBot";
+
+    public Migration(String version,
+                     String description,
+                     String author,
+                     DateTime started,
+                     DateTime finished,
+                     MigrationStatus status,
+                     String failureMessage) {
         this.version = version;
         this.description = description;
+        this.author = Optional.ofNullable(author).orElse(DEFAULT_AUTHOR);
         this.started = started;
         this.finished = finished;
         this.status = status;
@@ -57,7 +44,7 @@ public class Migration {
     }
 
     public Migration(MigrationCommand command) {
-        this(command.getVersion(), command.getDescription(), null, null, MigrationStatus.Pending, null);
+        this(command.getVersion(), command.getDescription(), command.getAuthor(), null, null, MigrationStatus.Pending, null);
         this.command = command;
     }
 
@@ -71,6 +58,22 @@ public class Migration {
 
     public String getDescription() {
         return description;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public DateTime getStarted() {
+        return started;
+    }
+
+    public DateTime getFinished() {
+        return finished;
+    }
+
+    public String getFailureMessage() {
+        return failureMessage;
     }
 
     public String getDuration() {
@@ -142,23 +145,9 @@ public class Migration {
         return StringUtils.join(tags, " ");
     }
 
-    public static class DateTimeSerializer extends JsonSerializer<DateTime> {
-        @Override
-        public void serialize(DateTime dateTime, JsonGenerator generator, SerializerProvider serializerProvider) throws IOException {
-            if (dateTime == null) {
-                generator.writeObject(null);
-            } else {
-                generator.writeString(dateTime.toString("yyyy-MM-dd HH:mm:ss.SSSZ"));
-            }
-        }
-    }
-
-    public static class DateTimeDeserializer extends JsonDeserializer<DateTime> {
-        @Override
-        public DateTime deserialize(JsonParser parser, DeserializationContext context) throws IOException {
-            if (parser.getValueAsString() == null) return null;
-            return DateTime.parse(parser.getValueAsString(), DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSSZ"));
-        }
+    @Override
+    public String toString() {
+        return String.format("version = <%s>, description = <%s>, author = <%s>, status = <%s>", version, description, author, status);
     }
 
     public static Comparator<Migration> sortByVersionAscending() {

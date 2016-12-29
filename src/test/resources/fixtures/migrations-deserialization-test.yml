@@ -1,0 +1,22 @@
+migrations:
+  # First migration using a JSON structured command
+  - version: 1.0.0
+    description: My first migration
+    author: Homer Simpson
+    command: {
+      insert: "test",
+      documents: [
+        { value1: 1, value2: "test1" },
+        { value1: 2, value2: "test2" }
+      ]
+    }
+  # Second migration using a YAML structured command
+  - version: 1.0.1
+    description: My second migration
+    command:
+      update: "test"
+      updates:
+        - u:
+            $set:
+              value3: false
+          multi: true

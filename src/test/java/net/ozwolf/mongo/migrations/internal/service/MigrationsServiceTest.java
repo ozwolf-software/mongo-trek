@@ -1,22 +1,20 @@
 package net.ozwolf.mongo.migrations.internal.service;
 
-import net.ozwolf.mongo.migrations.MigrationCommand;
+import net.ozwolf.mongo.migrations.MongoTrekState;
 import net.ozwolf.mongo.migrations.exception.DuplicateVersionException;
 import net.ozwolf.mongo.migrations.internal.dao.SchemaVersionDAO;
-import net.ozwolf.mongo.migrations.internal.domain.Migration;
-import net.ozwolf.mongo.migrations.internal.domain.MigrationStatus;
-import net.ozwolf.mongo.migrations.internal.domain.MigrationsState;
+import net.ozwolf.mongo.migrations.internal.domain.*;
 import org.joda.time.DateTime;
-import org.jongo.Jongo;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static net.ozwolf.mongo.migrations.matchers.MigrationMatchers.migrationOf;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -36,20 +34,22 @@ public class MigrationsServiceTest {
 
         when(schemaVersionDAO.findAll()).thenReturn(previouslyRun);
 
-        List<MigrationCommand> commands = commands(
+        MigrationCommands commands = commands(
                 new V1_0_0__FirstMigration(),
                 new V1_0_1__SecondMigration(),
                 new V2_0_0__FourthMigration(),
                 new V1_0_2__ThirdMigration()
         );
 
-        MigrationsState.Pending pendingMigrations = new MigrationsService(schemaVersionDAO).getState(commands).getPending();
+        MongoTrekState.Pending pendingMigrations = new MigrationsService(schemaVersionDAO).getState(commands).getPending();
 
-        assertThat(pendingMigrations.getMigrations().size(), is(2));
-        assertThat(pendingMigrations.getNextPendingVersion(), is("1.0.2"));
-        assertThat(pendingMigrations.getLastPendingVersion(), is("2.0.0"));
-        assertThat(pendingMigrations.getMigrations().get(0).getVersion(), is("1.0.2"));
-        assertThat(pendingMigrations.getMigrations().get(1).getVersion(), is("2.0.0"));
+        assertThat(pendingMigrations.getMigrations())
+                .hasSize(2)
+                .areAtLeastOne(migrationOf("1.0.2"))
+                .areAtLeastOne(migrationOf("2.0.0"));
+
+        assertThat(pendingMigrations.getNextPendingVersion()).isEqualTo("1.0.2");
+        assertThat(pendingMigrations.getLastPendingVersion()).isEqualTo("2.0.0");
     }
 
     @Test
@@ -62,7 +62,7 @@ public class MigrationsServiceTest {
 
         when(schemaVersionDAO.findAll()).thenReturn(previouslyRun);
 
-        List<MigrationCommand> commands = commands(
+        MigrationCommands commands = commands(
                 new V1_0_0__FirstMigration(),
                 new V1_0_1__SecondMigration(),
                 new V2_0_0__FourthMigration(),
@@ -71,18 +71,19 @@ public class MigrationsServiceTest {
 
         List<Migration> migrations = new MigrationsService(schemaVersionDAO).getState(commands).getMigrations();
 
-        assertThat(migrations.size(), is(4));
-        assertThat(migrations.get(0).getVersion(), is("1.0.0"));
-        assertThat(migrations.get(1).getVersion(), is("1.0.1"));
-        assertThat(migrations.get(2).getVersion(), is("1.0.2"));
-        assertThat(migrations.get(3).getVersion(), is("2.0.0"));
+        assertThat(migrations)
+                .hasSize(4)
+                .areAtLeastOne(migrationOf("1.0.0"))
+                .areAtLeastOne(migrationOf("1.0.1"))
+                .areAtLeastOne(migrationOf("1.0.2"))
+                .areAtLeastOne(migrationOf("2.0.0"));
     }
 
     @Test
     public void shouldThrowDuplicateVersionException() throws Throwable {
         when(schemaVersionDAO.findAll()).thenReturn(migrations());
 
-        List<MigrationCommand> commands = commands(
+        MigrationCommands commands = commands(
                 new V2_0_0__FourthMigration(),
                 new V1_0_2__ThirdMigration(),
                 new V2_0_0__DuplicateMigration()
@@ -97,6 +98,7 @@ public class MigrationsServiceTest {
         return new Migration(
                 version,
                 String.format("Migration %s", version),
+                Migration.DEFAULT_AUTHOR,
                 DateTime.now(),
                 (status == MigrationStatus.Successful) ? DateTime.now() : null,
                 status,
@@ -108,37 +110,38 @@ public class MigrationsServiceTest {
         return Arrays.asList(migrations);
     }
 
-    private static List<MigrationCommand> commands(MigrationCommand... commands) {
-        return Arrays.asList(commands);
+    private static MigrationCommands commands(MigrationCommand... commands) {
+        return new MigrationCommands(Arrays.asList(commands));
     }
 
-    public static class V1_0_0__FirstMigration extends MigrationCommand {
-        @Override
-        public void migrate(Jongo jongo) {
+    private static class V1_0_0__FirstMigration extends MigrationCommand {
+        V1_0_0__FirstMigration() {
+            super("1.0.0", "First Migration", Migration.DEFAULT_AUTHOR, new HashMap<>());
         }
     }
 
-    public static class V1_0_1__SecondMigration extends MigrationCommand {
-        @Override
-        public void migrate(Jongo jongo) {
+    private static class V1_0_1__SecondMigration extends MigrationCommand {
+        V1_0_1__SecondMigration() {
+            super("1.0.1", "Second Migration", Migration.DEFAULT_AUTHOR, new HashMap<>());
+        }
+
+    }
+
+    private static class V1_0_2__ThirdMigration extends MigrationCommand {
+        V1_0_2__ThirdMigration() {
+            super("1.0.2", "Third Migration", Migration.DEFAULT_AUTHOR, new HashMap<>());
         }
     }
 
-    public static class V1_0_2__ThirdMigration extends MigrationCommand {
-        @Override
-        public void migrate(Jongo jongo) {
+    private static class V2_0_0__FourthMigration extends MigrationCommand {
+        V2_0_0__FourthMigration() {
+            super("2.0.0", "Fourth Migration", Migration.DEFAULT_AUTHOR, new HashMap<>());
         }
     }
 
-    public static class V2_0_0__FourthMigration extends MigrationCommand {
-        @Override
-        public void migrate(Jongo jongo) {
-        }
-    }
-
-    public static class V2_0_0__DuplicateMigration extends MigrationCommand {
-        @Override
-        public void migrate(Jongo jongo) {
+    private static class V2_0_0__DuplicateMigration extends MigrationCommand {
+        V2_0_0__DuplicateMigration() {
+            super("2.0.0", "Duplicate Migration", Migration.DEFAULT_AUTHOR, new HashMap<>());
         }
     }
 }

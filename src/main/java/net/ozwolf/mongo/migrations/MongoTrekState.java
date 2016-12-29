@@ -1,21 +1,23 @@
-package net.ozwolf.mongo.migrations.internal.domain;
+package net.ozwolf.mongo.migrations;
+
+import net.ozwolf.mongo.migrations.internal.domain.Migration;
 
 import java.util.*;
 
 import static java.util.stream.Collectors.toList;
 
 /**
- * <h1>Migrations State</h1>
+ * <h1>Mongo Trek State</h1>
  *
  * This class provides the collection of migrations and an ability to query the overall state of the process.
  *
  * This includes what the current version is, what the pending state is as well as a list of failed and applied migrations.
  *
  */
-public class MigrationsState {
+public class MongoTrekState {
     private final Map<String, Migration> migrations;
 
-    public MigrationsState(Collection<Migration> migrations) {
+    public MongoTrekState(Collection<Migration> migrations) {
         this.migrations = new HashMap<>();
         migrations.stream().forEach(m -> this.migrations.put(m.getVersion(), m));
     }

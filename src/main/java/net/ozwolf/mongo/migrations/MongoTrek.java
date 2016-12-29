@@ -4,45 +4,36 @@ import com.mongodb.DB;
 import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
-import net.ozwolf.mongo.migrations.exception.MongoMigrationsFailureException;
+import com.mongodb.client.MongoDatabase;
+import net.ozwolf.mongo.migrations.exception.MongoTrekFailureException;
 import net.ozwolf.mongo.migrations.internal.dao.DefaultSchemaVersionDAO;
 import net.ozwolf.mongo.migrations.internal.dao.SchemaVersionDAO;
 import net.ozwolf.mongo.migrations.internal.domain.Migration;
-import net.ozwolf.mongo.migrations.internal.domain.MigrationsState;
+import net.ozwolf.mongo.migrations.internal.domain.MigrationCommands;
+import net.ozwolf.mongo.migrations.internal.factory.MigrationCommandsFactory;
 import net.ozwolf.mongo.migrations.internal.service.MigrationsService;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
-import org.jongo.Jongo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * <h1>Mongo Migrations</h1>
  *
- * The Mongo Migrations class allows an application to provide its own Mongo schema connection and a collection of migration commands to be
- * executed against the schema in question.  It persists migration state in the provides schema version collection, allowing retries of failed commands
- * and a later points.
- *
- * Any connection used by the MongoMigrations library will be closed.
+ * The Mongo Migrations class allows an application to provide it's own `MongoDatabase` instance or MongoDB Connection string to then apply migrations to or report on the migration status of their database schema.
  *
  * ##Example Usage
  *
  * ```java
  * public class MyApplication {
  *      public void start(){
- *          MongoClientUri uri = new MongoClientUri("mongo://root:password@localhost:27017/my_application");
- *
- *          List<MongoCommand> commands = new ArrayList<>();
- *          commands.add(new V1_0_0__FirstCommand());
- *          commands.add(new V1_0_1__SecondCommand());
- *
  *          try {
- *              MongoMigrations migrations = new MongoMigrations(uri);
- *              migrations.setSchemaVersionCollection("_schema_version_my_application");
- *              MigrationsState state = migrations.migrate(commands);
+ *              MongoTrek trek = new MongoTrek("mongodb://root:password@localhost:27017/my_application");
+ *
+ *              trek.setSchemaVersionCollection("_schema_version_my_application");
+ *              MongoTrekState state = trek.migrate("mongodb/trek.yml");
  *
  *              LOGGER.info("Completed migrations to version " + state.getCurrentVersion());
  *          } catch (MongoMigrationFailureException e) {
@@ -53,58 +44,47 @@ import java.util.concurrent.atomic.AtomicInteger;
  * ```
  */
 @SuppressWarnings({"OptionalGetWithoutIsPresent", "WeakerAccess", "unused"})
-public class MongoMigrations {
-    private final Jongo jongo;
+public class MongoTrek {
+    private final MongoClient mongo;
+    private final MongoDatabase database;
 
-    private final boolean providedJongo;
+    private final boolean providedDatabase;
 
     private SchemaVersionDAO schemaVersionDAO;
     private MigrationsService migrationsServices;
+    private MigrationCommandsFactory commandsFactory;
     private String schemaVersionCollection;
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(MongoMigrations.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(MongoTrek.class);
     private final static String DEFAULT_SCHEMA_VERSION_COLLECTION = "_schema_version";
 
     /**
-     * Create a new Mongo migrations instance that will connect to the provided URI.  This method is self-contained and
-     * will open a connection, run the migrations and close the connection again.  Ideal for projects that don't normally use
-     * Jongo as a connection library.
+     * Create a new MongoTrek instance that will connect to the provided connection string.
      *
-     * @param uri The Mongo instance connection URI
+     * @param uri The Mongo instance connection string
+     * @see [MongoDB Connection String](https://docs.mongodb.com/manual/reference/connection-string/)
      */
-    public MongoMigrations(String uri) {
-        this.jongo = new Jongo(connectTo(new MongoClientURI(uri)));
-        this.providedJongo = false;
+    public MongoTrek(String uri) {
+        MongoClientURI clientURI = new MongoClientURI(uri);
+        this.mongo = new MongoClient(clientURI);
+        this.database = this.mongo.getDatabase(clientURI.getDatabase());
+        this.providedDatabase = false;
         this.schemaVersionCollection = DEFAULT_SCHEMA_VERSION_COLLECTION;
     }
 
     /**
-     * Create a new MongoMigrations using a database factory definition to connect.
-     *
-     * *Note* MongoMigrations assumes it owns the associated connection and __will__ close it on completion.
-     *
-     * @param factory The database factory.
+     * Create a new MongoTrek instance using a provided `MongoDatabase` instance.  MongoTrek will not close this connection.
+     * @param database The `MongoDatabase` instance.
      */
-    public MongoMigrations(DBFactory factory) {
-        this.jongo = new Jongo(factory.connectTo());
-        this.providedJongo = false;
+    public MongoTrek(MongoDatabase database){
+        this.mongo = null;
+        this.database = database;
+        this.providedDatabase = true;
         this.schemaVersionCollection = DEFAULT_SCHEMA_VERSION_COLLECTION;
     }
 
     /**
-     * Create a new MongoMigrations using a provided and existing Jongo connection.
-     *
-     * *Note* MongoMigrations assumes it does not own the Jongo connection and __will not__ close it on completion.
-     * @param jongo The Jongo connection
-     */
-    public MongoMigrations(Jongo jongo){
-        this.jongo = jongo;
-        this.providedJongo = true;
-        this.schemaVersionCollection = DEFAULT_SCHEMA_VERSION_COLLECTION;
-    }
-
-    /**
-     * Change the schema version collection from the default *_schema_version*
+     * Change the schema version collection from the default `_schema_version`
      *
      * @param collectionName The schema version collection name
      */
@@ -115,14 +95,16 @@ public class MongoMigrations {
     /**
      * Migrate the Mongo database using the provided collection of commands.  Will not apply versions already applied successfully.
      *
-     * @param commands The commands to apply against the database.
-     * @return MigrationsState The final state of the migrations upon completion.
-     * @throws MongoMigrationsFailureException If the migration fails for whatever reason.
+     * @param migrationsFile The migrations file to apply (should be on the classpath)
+     * @return The trek state
+     * @throws MongoTrekFailureException If the migration fails for whatever reason.
      */
-    public MigrationsState migrate(Collection<MigrationCommand> commands) throws MongoMigrationsFailureException {
+    public MongoTrekState migrate(String migrationsFile) throws MongoTrekFailureException {
         LOGGER.info("DATABASE MIGRATIONS");
-        MigrationsState state = migrationsService().getState(commands);
-        if (commands.isEmpty()) {
+        MigrationCommands commands = commandsFactory().getCommands(migrationsFile);
+        MongoTrekState state = migrationsService().getState(commands);
+
+        if (!commands.hasMigrations()) {
             LOGGER.info("   No migrations to apply.");
             return state;
         }
@@ -131,9 +113,9 @@ public class MongoMigrations {
         AtomicInteger successfulCount = new AtomicInteger(0);
 
         try {
-            MigrationsState.Pending pending = state.getPending();
+            MongoTrekState.Pending pending = state.getPending();
 
-            if (!pending.hasPendingMigrations()){
+            if (!pending.hasPendingMigrations()) {
                 LOGGER.info("   No migrations to apply.");
                 return state;
             }
@@ -142,30 +124,31 @@ public class MongoMigrations {
             LOGGER.info(String.format("       Applying : [ %s ] -> [ %s ]", pending.getNextPendingVersion(), pending.getLastPendingVersion()));
             LOGGER.info("     Migrations :");
 
-            pending.getMigrations().stream().forEach(m -> applyMigration(jongo, successfulCount, m));
+            pending.getMigrations().stream().forEach(m -> applyMigration(successfulCount, m));
 
             // Get state after migrations have been applied.
             return migrationsService().getState(commands);
         } catch (Exception e) {
             LOGGER.error("Error applying migration(s)", e);
-            throw new MongoMigrationsFailureException(e);
+            throw new MongoTrekFailureException(e);
         } finally {
             DateTime finish = DateTime.now();
             LOGGER.info(String.format(">>> [ %d ] migrations applied in [ %d seconds ] <<<", successfulCount.get(), Seconds.secondsBetween(start, finish).getSeconds()));
-            if (!this.providedJongo)
-                this.jongo.getDatabase().getMongo().close();
+            if (!this.providedDatabase) this.mongo.close();
         }
     }
 
     /**
      * Report the status of the migrations and provided commands.  Does not apply the migrations.
      *
-     * @param commands The commands to report the status against.
-     * @throws MongoMigrationsFailureException If the status report fails for whatever reason.
+     * @param migrationsFile The migrations file to apply (should be on the classpath)
+     * @return The trek state
+     * @throws MongoTrekFailureException If the status report fails for whatever reason.
      */
-    public MigrationsState status(Collection<MigrationCommand> commands) throws MongoMigrationsFailureException {
+    public MongoTrekState status(String migrationsFile) throws MongoTrekFailureException {
         LOGGER.info("DATABASE MIGRATIONS");
-        MigrationsState state = migrationsService().getState(commands);
+        MigrationCommands commands = commandsFactory().getCommands(migrationsFile);
+        MongoTrekState state = migrationsService().getState(commands);
         try {
             logStatus("status", state.getCurrentVersion());
             LOGGER.info("     Migrations :");
@@ -175,25 +158,24 @@ public class MongoMigrations {
             return state;
         } catch (Exception e) {
             LOGGER.error("Error in commands and cannot provide status", e);
-            throw new MongoMigrationsFailureException(e);
+            throw new MongoTrekFailureException(e);
         } finally {
-            if (!this.providedJongo)
-                this.jongo.getDatabase().getMongo().close();
+            if (!this.providedDatabase) this.mongo.close();
         }
     }
 
     private void logStatus(String action, String currentVersion) {
-        LOGGER.info(String.format("       Database : [ %s ]", this.jongo.getDatabase().getName()));
+        LOGGER.info(String.format("       Database : [ %s ]", this.database.getName()));
         LOGGER.info(String.format(" Schema Version : [ %s ]", schemaVersionCollection));
         LOGGER.info(String.format("         Action : [ %s ]", action));
         LOGGER.info(String.format("Current Version : [ %s ]", currentVersion));
     }
 
-    private void applyMigration(Jongo jongo, AtomicInteger successfulCount, Migration migration) {
+    private void applyMigration(AtomicInteger successfulCount, Migration migration) {
         try {
             LOGGER.info(String.format("       %s : %s", migration.getVersion(), migration.getDescription()));
             schemaVersionDAO().save(migration.running());
-            migration.getCommand().migrate(jongo);
+            migration.getCommand().migrate(this.database);
             schemaVersionDAO().save(migration.successful());
             successfulCount.incrementAndGet();
         } catch (Exception e) {
@@ -221,11 +203,14 @@ public class MongoMigrations {
 
     private SchemaVersionDAO schemaVersionDAO() {
         if (schemaVersionDAO == null)
-            schemaVersionDAO = new DefaultSchemaVersionDAO(this.jongo, this.schemaVersionCollection);
+            schemaVersionDAO = new DefaultSchemaVersionDAO(this.database.getCollection(schemaVersionCollection));
         return schemaVersionDAO;
     }
 
-    public interface DBFactory {
-        DB connectTo();
+    private MigrationCommandsFactory commandsFactory(){
+        if (commandsFactory == null)
+            commandsFactory = new MigrationCommandsFactory();
+
+        return commandsFactory;
     }
 }

@@ -1,12 +1,11 @@
 package net.ozwolf.mongo.migrations.internal.service;
 
-import net.ozwolf.mongo.migrations.MigrationCommand;
+import net.ozwolf.mongo.migrations.MongoTrekState;
 import net.ozwolf.mongo.migrations.exception.DuplicateVersionException;
 import net.ozwolf.mongo.migrations.internal.dao.SchemaVersionDAO;
 import net.ozwolf.mongo.migrations.internal.domain.Migration;
-import net.ozwolf.mongo.migrations.internal.domain.MigrationsState;
+import net.ozwolf.mongo.migrations.internal.domain.MigrationCommands;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -20,14 +19,14 @@ public class MigrationsService {
         this.schemaVersionDAO = schemaVersionDAO;
     }
 
-    public MigrationsState getState(Collection<MigrationCommand> commands) {
-        return new MigrationsState(getFullState(commands));
+    public MongoTrekState getState(MigrationCommands commands) {
+        return new MongoTrekState(getFullState(commands));
     }
 
-    private List<Migration> getFullState(Collection<MigrationCommand> commands) throws DuplicateVersionException {
+    private List<Migration> getFullState(MigrationCommands commands) throws DuplicateVersionException {
         List<Migration> alreadyRun = schemaVersionDAO.findAll();
 
-        List<Migration> commandMigrations = commands
+        List<Migration> commandMigrations = commands.getMigrations()
                 .stream()
                 .map(Migration::new)
                 .collect(toList());

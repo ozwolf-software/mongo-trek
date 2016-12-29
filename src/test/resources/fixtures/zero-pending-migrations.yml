@@ -1,0 +1,8 @@
+migrations:
+  - version: 1.0.0
+    description: Applied Migration
+    author: Homer Simpson
+    command: {
+      insert: "first_migrations",
+      documents: []
+    }

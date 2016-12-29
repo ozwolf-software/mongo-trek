@@ -1,0 +1,31 @@
+migrations:
+  - version: 1.0.0
+    description: Applied migration
+    author: Homer Simpson
+    command: {}
+  - version: 1.0.1
+    description: Another applied migration
+    command: {}
+  - version: 1.0.2
+    description: Failed last time migration
+    command: {
+      insert: "first_migrations",
+      documents: [
+        { name: "Homer Simpson", age: 37 },
+        { name: "Marge Simpson", age: 36 }
+      ]
+    }
+  - version: 2.0.0
+    description: Brand new migration
+    command: {
+      insert: "second_migrations",
+      documents: [
+        { town: "Springfield", country: "United States" },
+        { town: "Shelbyville", country: "United States" }
+      ]
+    }
+  - version: 2.0.0.1
+    description: I will always fail
+    command: {
+      rubbish: "this should be unrecognised"
+    }

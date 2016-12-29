@@ -1,19 +1,23 @@
-# Java Mongo Migrations
+# mongoTrek
 
-[![Build Status](https://travis-ci.org/ozwolf-software/java-mongo-migrations.svg?branch=master)](https://travis-ci.org/ozwolf-software/java-mongo-migrations)
+**mongoTrek** is a a Java library inspired by [Liquibase](http://www.liquibase.org/) for managing collection and document migrations within your application's database.
 
-This library is designed to allow tracked Mongo schema migrations inside a Java application, creating the ability to write code-based database migrations utilising your own Java driver connection to achieve this.
+## Java Mongo Migrations Upgrade
 
-This library utilises the [Jongo](http://jongo.org) library for executing migrations against the Mongo database schema, while keeping track of migration state.
- 
+mongoTrek is a fork from the [Java Mongo Migrations](https://github.com/ozwolf-software/java-mongo-migrations) project.  As such, projects that have previously managed migrations using this project can upgrade to mongoTrek and it will understand the previous migrations schema version collection documents.
+
 ## Dependency
 
 ```xml
 <dependency>
     <groupId>net.ozwolf</groupId>
-    <artifactId>java-mongo-migrations</artifactId>
-    <version>4.0.0</version>
+    <artifactId>mongo-trek</artifactId>
+    <version>${current.version}</version>
 </dependency>
+```
+
+```gradle
+compile 'au.com.ioof.asis.app:core:${current.version}'
 ```
 
 ### Provided Dependencies
@@ -22,71 +26,85 @@ As part of your own project, you will need to include the following dependencies
 
 #### Mongo Java Driver
 
-Build Version: `3.3.0`
+Build Version: `3.2.0`
 
 ```xml
 <dependency>
     <groupId>org.mongodb</groupId>
     <artifactId>mongo-java-driver</artifactId>
-    <version>[3.3.0,)</version>
+    <version>[3.2.0,)</version>
 </dependency>
 ```
 
-#### Jongo
+## MongoDB Database Commands
 
-Build Version: `1.3.0`
+mongoTrek uses the MongoDB database commands framework to execute commands.  
 
-```xml
-<dependency>
-    <groupId>org.jongo</groupId>
-    <artifactId>jongo</artifactId>
-    <version>[1.3,)</version>
-</dependency>
-```
+Refer to the [MongoDB Database Commands](https://docs.mongodb.com/manual/reference/command/) documentation.
 
 ## Usage
 
-### Define Your Migrations
+### Define Your Migrations File
 
-Migrations need to extend the Migration command and be named as such `V<version>__<name>`.
+The migrations file for mongoTrek is a YAML or JSON file that is either a resource in your classpath or a file on your file system.  The library will first scan the classpath before the file system.
 
-For example, `V1_0_0__MyFirstMigration` will be interpreted as version `1.0.0` with a description of `My first migration`.
+Each migration entry consists of:
+ 
++ `version` [ `REQUIRED` ] - A unique version identifier.  Migrations will be played in schemantic version order, regardless of their order in the migrations file (eg. version `2.0.0` will always be played ahead of `2.0.0.1`)
++ `description` [ `REQUIRED` ] - A short description of the migrations purpose
++ `author` [ `OPTIONAL` ] - The author of the migration.  If not supplied, the author will be recorded as `trekBot`
++ `command` [ `REQUIRED` ] - The database command to run.  Because mongoTrek uses YAML, this can be in the form of a direct JSON or YAML structure, as long as it meets the MongoDB Database Command requirements.
 
-For example:
+#### Example Migrations File
 
-```java
-public class V1_0_0__MyFirstMigration extends MigrationCommand {
-    {@literal @}Override
-    public void migrate(Jongo jongo) {
-        jongo.getCollection("cities").insert("{'city': 'Sydney', 'country': 'Australia'}");
-        jongo.getCollection("cities").insert("{'city': 'Melbourne', 'country': 'Australia'}");
-        jongo.getCollection("cities").insert("{'city': 'London', 'country': 'United Kingdom'}");
-        jongo.getCollection("cities").insert("{'city': 'New York', 'country': 'United States'}");
-    }
-}
+```yaml
+migrations:
+    - version: 1.0.0
+      description: populate people base data
+      author: John Trek
+      command: {
+        insert: "people",
+        documents: [
+            { name: "Homer Simpson", age: 37 },
+            { name: "Marge Simpson", age: 36 }
+        ]
+      }
+    - version: 1.0.1
+      description: populate town base data
+      command: {
+        insert: "town",
+        documents: [
+            { name: "Springfield", country: "USA" },
+            { name: "Shelbyville", country: "USA" }
+        ]
+      }
 ```
 
 ### Running Your Migrations
 
-This tool is meant to be run as part of your application's startup process (similar in theme to the [Flyway](http://flywaydb.org) toolset for MySQL in Java).  First, create a Mongo DB object that is a connection to your schema then create a `MongoMigrations` instance.  Finally, pass in your initialized command objects to the `migrate` command.
-  
-Commands passed to the `MongoMigrations` object must be instantiated.  This approach has been taken to allow you to define _how_ you instantiate your commands yourself (ie. Spring, Guice, etc.)
+To run your migrations, provide either a [MongoDB Connection String URI](https://docs.mongodb.com/manual/reference/connection-string/) or a `MongoDatabase` instance on initialization.
 
-For example:
+You can then either migrate your database (`MongoTrek.migrate(<file>)`) or request a status update (`MongoTrek.status(<file>)`).  Both methods will return a `MongoTrekState`, allowing you to query applied, pending and current migration versions.
+ 
+#### Example Usage
 
 ```java
 public class MyApplication {
-    public void start(){
-        List<MongoCommand> commands = new ArrayList<>();
-        commands.add(new FirstMigration());
-        commands.add(new SecondMigration());
-        
+    private final static Logger LOGGER = LoggerFactory.getLogger(MyApplication.class);
+    
+    public void start() {
         try {
-            MongoMigrations migrations = new MongoMigrations("mongo://localhost:27017/my_application_schema");
-            migrations.setSchemaVersionCollection("_my_custom_schema_version");
-            migrations.migrate(commands);
-        } catch (MongoMigrationsFailureException e) {
+            MongoTrek trek = new MongoTrek("mongodb://localhost:27017/my_app_schema");
+                    
+            trek.setSchemaVersionCollection("_my_custom_schema_version");
+            
+            MongoTrekState state = trek.migrate("mongodb/trek.yml");
+            
+            LOGGER.info("Successfully migrated schema to version: " + state.getCurrentVersion());
+        } catch (MongoTrekFailureException e) {
             LOGGER.error("Failed to migrate database", e);
+            
+            System.exit(-1);
         }
     }
 }
@@ -96,7 +114,7 @@ public class MyApplication {
 
 Java Mongo Migrations uses the [LOGBack](http://logback.qos.ch) project log outputs.
 
-The logger in question is the `MongoMigrations` class logger (ie. `Logger migrationsLogger = LoggerFactory.getLogger(MongoMigrations.class);`)
+The logger in question is the `MongoTrek` class logger (ie. `Logger migrationsLogger = LoggerFactory.getLogger(MongoTrek.class);`)
 
 You can configure the output of migrations logger using this class.
 
@@ -107,7 +125,5 @@ Messages are logged via the following levels:
 
 ## Acknowledgements
 
-+ [Jongo](http://jongo.org)
 + [Fongo](https://github.com/foursquare/fongo)
 + [LOGBack](http://logback.qos.ch)
-+ [Flyway](http://flywaydb.org) _for inspiration_

@@ -8,7 +8,7 @@ import java.util.Optional;
 public interface SchemaVersionDAO {
     List<Migration> findAll();
 
-    void save(Migration record);
+    void save(Migration migration);
 
     Optional<Migration> findLastSuccessful();
 }
