@@ -114,7 +114,7 @@ public class MyApplication {
 
 ### Logging Configuration
 
-Java Mongo Migrations uses the [LOGBack](http://logback.qos.ch) project log outputs.
+mongoTrek uses the [LOGBack](http://logback.qos.ch) project log outputs.
 
 The logger in question is the `MongoTrek` class logger (ie. `Logger migrationsLogger = LoggerFactory.getLogger(MongoTrek.class);`)
 

@@ -9,6 +9,6 @@ package net.ozwolf.mongo.migrations.exception;
  */
 public class MongoTrekFailureException extends Exception {
     public MongoTrekFailureException(Throwable e) {
-        super(String.format("Mongo migrations failed: %s", e.getMessage()), e);
+        super(String.format("mongoTrek failed: %s", e.getMessage()), e);
     }
 }

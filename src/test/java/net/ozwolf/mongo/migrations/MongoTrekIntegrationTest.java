@@ -108,7 +108,7 @@ public class MongoTrekIntegrationTest {
                 fail(String.format("Expected exception of [ %s ], but got [ %s ]", MongoTrekFailureException.class.getSimpleName(), e.getClass().getSimpleName()));
 
             assertThat(e.getCause()).isInstanceOf(FongoException.class);
-            assertThat(e.getMessage()).isEqualTo("Mongo migrations failed: Not implemented for command : { \"rubbish\" : \"this should be unrecognised\"}");
+            assertThat(e.getMessage()).isEqualTo("mongoTrek failed: Not implemented for command : { \"rubbish\" : \"this should be unrecognised\"}");
 
             validateMigrations(
                     migrationOf("1.0.0", MigrationStatus.Successful),

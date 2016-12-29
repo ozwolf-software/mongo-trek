@@ -20,9 +20,9 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * <h1>Mongo Migrations</h1>
+ * <h1>Mongo Trek</h1>
  *
- * The Mongo Migrations class allows an application to provide it's own `MongoDatabase` instance or MongoDB Connection string to then apply migrations to or report on the migration status of their database schema.
+ * The mongoTrek main class allows an application to provide it's own `MongoDatabase` instance or MongoDB Connection string to then apply migrations to or report on the migration status of their database schema.
  *
  * ##Example Usage
  *
