@@ -47,6 +47,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class MongoTrek {
     private final MongoClient mongo;
     private final MongoDatabase database;
+    private final String migrationsFile;
 
     private final boolean providedDatabase;
 
@@ -61,10 +62,12 @@ public class MongoTrek {
     /**
      * Create a new MongoTrek instance that will connect to the provided connection string.
      *
+     * @param migrationsFile The YAML or JSON file containing your MongoDB migrations.
      * @param uri The Mongo instance connection string
      * @see [MongoDB Connection String](https://docs.mongodb.com/manual/reference/connection-string/)
      */
-    public MongoTrek(String uri) {
+    public MongoTrek(String migrationsFile, String uri) {
+        this.migrationsFile = migrationsFile;
         MongoClientURI clientURI = new MongoClientURI(uri);
         this.mongo = new MongoClient(clientURI);
         this.database = this.mongo.getDatabase(clientURI.getDatabase());
@@ -74,9 +77,12 @@ public class MongoTrek {
 
     /**
      * Create a new MongoTrek instance using a provided `MongoDatabase` instance.  MongoTrek will not close this connection.
+     *
+     * @param migrationsFile The YAML or JSON file containing your MongoDB migrations.
      * @param database The `MongoDatabase` instance.
      */
-    public MongoTrek(MongoDatabase database){
+    public MongoTrek(String migrationsFile, MongoDatabase database){
+        this.migrationsFile = migrationsFile;
         this.mongo = null;
         this.database = database;
         this.providedDatabase = true;
@@ -95,11 +101,10 @@ public class MongoTrek {
     /**
      * Migrate the Mongo database using the provided collection of commands.  Will not apply versions already applied successfully.
      *
-     * @param migrationsFile The migrations file to apply (should be on the classpath)
      * @return The trek state
      * @throws MongoTrekFailureException If the migration fails for whatever reason.
      */
-    public MongoTrekState migrate(String migrationsFile) throws MongoTrekFailureException {
+    public MongoTrekState migrate() throws MongoTrekFailureException {
         LOGGER.info("DATABASE MIGRATIONS");
         MigrationCommands commands = commandsFactory().getCommands(migrationsFile);
         MongoTrekState state = migrationsService().getState(commands);
@@ -141,11 +146,10 @@ public class MongoTrek {
     /**
      * Report the status of the migrations and provided commands.  Does not apply the migrations.
      *
-     * @param migrationsFile The migrations file to apply (should be on the classpath)
      * @return The trek state
      * @throws MongoTrekFailureException If the status report fails for whatever reason.
      */
-    public MongoTrekState status(String migrationsFile) throws MongoTrekFailureException {
+    public MongoTrekState status() throws MongoTrekFailureException {
         LOGGER.info("DATABASE MIGRATIONS");
         MigrationCommands commands = commandsFactory().getCommands(migrationsFile);
         MongoTrekState state = migrationsService().getState(commands);

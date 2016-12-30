@@ -66,9 +66,9 @@ public class MongoTrekIntegrationTest {
 
     @Test
     public void shouldHandleZeroPendingMigrations() throws MongoTrekFailureException {
-        MongoTrek migrations = new MongoTrek(this.database);
+        MongoTrek migrations = new MongoTrek("fixtures/zero-pending-migrations.yml", this.database);
         migrations.setSchemaVersionCollection(SCHEMA_VERSION_COLLECTION);
-        migrations.migrate("fixtures/zero-pending-migrations.yml");
+        migrations.migrate();
 
         verify(appender, atLeastOnce()).doAppend(captor.capture());
 
@@ -81,9 +81,9 @@ public class MongoTrekIntegrationTest {
 
     @Test
     public void shouldHandleZeroCommandsProvided() throws MongoTrekFailureException {
-        MongoTrek migrations = new MongoTrek(this.database);
+        MongoTrek migrations = new MongoTrek("fixtures/zero-migrations.yml", this.database);
         migrations.setSchemaVersionCollection(SCHEMA_VERSION_COLLECTION);
-        migrations.migrate("fixtures/zero-migrations.yml");
+        migrations.migrate();
 
         verify(appender, atLeastOnce()).doAppend(captor.capture());
 
@@ -98,9 +98,9 @@ public class MongoTrekIntegrationTest {
     @Test
     public void shouldFailMigrationsOnLastMigration() {
         try {
-            MongoTrek migrations = new MongoTrek(this.database);
+            MongoTrek migrations = new MongoTrek("fixtures/last-failure-migrations.yml", this.database);
             migrations.setSchemaVersionCollection(SCHEMA_VERSION_COLLECTION);
-            migrations.migrate("fixtures/last-failure-migrations.yml");
+            migrations.migrate();
 
             fail(String.format("Expected exception of [ %s ], but got [ none ]", MongoTrekFailureException.class.getSimpleName()));
         } catch (Exception e) {
@@ -143,9 +143,9 @@ public class MongoTrekIntegrationTest {
 
     @Test
     public void shouldReportOnMigrations() throws MongoTrekFailureException {
-        MongoTrek migrations = new MongoTrek(this.database);
+        MongoTrek migrations = new MongoTrek("fixtures/last-failure-migrations.yml", this.database);
         migrations.setSchemaVersionCollection(SCHEMA_VERSION_COLLECTION);
-        migrations.status("fixtures/last-failure-migrations.yml");
+        migrations.status();
 
         verify(appender, atLeastOnce()).doAppend(captor.capture());
         List<ILoggingEvent> events = captor.getAllValues();
