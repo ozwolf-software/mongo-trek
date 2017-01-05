@@ -12,6 +12,8 @@ mongoTrek is a fork from the [Java Mongo Migrations](https://github.com/ozwolf-s
 
 ## Dependency
 
+### Maven
+
 ```xml
 <dependency>
     <groupId>net.ozwolf</groupId>
@@ -20,8 +22,10 @@ mongoTrek is a fork from the [Java Mongo Migrations](https://github.com/ozwolf-s
 </dependency>
 ```
 
+### Gradle
+
 ```gradle
-compile 'au.com.ioof.asis.app:core:${current.version}'
+compile 'net.ozwolf:mongo-trek:${current.version}'
 ```
 
 ### Provided Dependencies
