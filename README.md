@@ -84,6 +84,22 @@ migrations:
       }
 ```
 
+#### Embedded Functions
+
+For commands such as the [MapReduce Command](https://docs.mongodb.com/manual/reference/command/mapReduce/#mapreduce-reduce-cmd), functions should be enclosed as strings.  For example:
+
+```yaml
+migrations:
+    - version: 1.0.0
+      description: run a map-reduce
+      command: {
+        mapReduce: "towns",
+        map: "function() { emit(this.country, 1); }",
+        reduce: "function(country, towns) { return Array.sum(towns); }",
+        out: "town_counts"
+       }
+```
+
 ### Running Your Migrations
 
 To run your migrations, provide either a [MongoDB Connection String URI](https://docs.mongodb.com/manual/reference/connection-string/) or a `MongoDatabase` instance on initialization.
