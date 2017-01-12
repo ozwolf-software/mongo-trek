@@ -1,6 +1,10 @@
 ![mongo-trek](https://raw.githubusercontent.com/ozwolf-software/mongo-trek/master/misc/mongotrek-logo.png)
 
-[![Build Status](https://travis-ci.org/ozwolf-software/mongo-trek.svg?branch=master)](https://travis-ci.org/ozwolf-software/mongo-trek)
+<!--[![Build Status](https://travis-ci.org/ozwolf-software/mongo-trek.svg?branch=master)](https://travis-ci.org/ozwolf-software/mongo-trek)-->
+
+[![][travis img]][travis]
+[![][maven img]][maven]
+[![][license img]][license]
 
 **mongoTrek** is a a Java library inspired by [Liquibase](http://www.liquibase.org/) for managing collection and document migrations within your application's database.
 
