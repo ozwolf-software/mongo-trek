@@ -118,11 +118,11 @@ public class MyApplication {
     
     public void start() {
         try {
-            MongoTrek trek = new MongoTrek("mongodb://localhost:27017/my_app_schema");
+            MongoTrek trek = new MongoTrek("mongodb/trek.yml", "mongodb://localhost:27017/my_app_schema");
                     
             trek.setSchemaVersionCollection("_my_custom_schema_version");
             
-            MongoTrekState state = trek.migrate("mongodb/trek.yml");
+            MongoTrekState state = trek.migrate();
             
             LOGGER.info("Successfully migrated schema to version: " + state.getCurrentVersion());
         } catch (MongoTrekFailureException e) {
