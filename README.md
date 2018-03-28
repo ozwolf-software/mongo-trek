@@ -46,6 +46,10 @@ Build Version: `3.2.0`
 </dependency>
 ```
 
+#### Slf4j Implementation
+
+This library is tested against the Logback Classic library at version `1.2.3` 
+
 ## MongoDB Database Commands
 
 mongoTrek uses the MongoDB database commands framework to execute commands.  
