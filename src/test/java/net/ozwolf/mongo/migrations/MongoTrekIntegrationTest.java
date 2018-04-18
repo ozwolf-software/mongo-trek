@@ -48,7 +48,7 @@ public class MongoTrekIntegrationTest {
     private final ArgumentCaptor<ILoggingEvent> captor = ArgumentCaptor.forClass(ILoggingEvent.class);
 
     @Before
-    public void setUp() throws UnknownHostException {
+    public void setUp() {
         this.database = fongo.getDatabase();
 
         this.database.getCollection(SCHEMA_VERSION_COLLECTION).drop();
@@ -145,7 +145,7 @@ public class MongoTrekIntegrationTest {
     public void shouldReportOnMigrations() throws MongoTrekFailureException {
         MongoTrek migrations = new MongoTrek("fixtures/last-failure-migrations.yml", this.database);
         migrations.setSchemaVersionCollection(SCHEMA_VERSION_COLLECTION);
-        migrations.status();
+        migrations.status(true);
 
         verify(appender, atLeastOnce()).doAppend(captor.capture());
         List<ILoggingEvent> events = captor.getAllValues();

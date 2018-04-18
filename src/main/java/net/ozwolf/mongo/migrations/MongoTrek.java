@@ -129,7 +129,7 @@ public class MongoTrek {
             LOGGER.info(String.format("       Applying : [ %s ] -> [ %s ]", pending.getNextPendingVersion(), pending.getLastPendingVersion()));
             LOGGER.info("     Migrations :");
 
-            pending.getMigrations().stream().forEach(m -> applyMigration(successfulCount, m));
+            pending.getMigrations().forEach(m -> applyMigration(successfulCount, m));
 
             // Get state after migrations have been applied.
             return migrationsService().getState(commands);
@@ -146,22 +146,38 @@ public class MongoTrek {
     /**
      * Report the status of the migrations and provided commands.  Does not apply the migrations.
      *
+     * By default, this method will not log status to the logger.  Refer to the {@link #status(boolean) status(boolean)} method.
+     *
      * @return The trek state
      * @throws MongoTrekFailureException If the status report fails for whatever reason.
      */
     public MongoTrekState status() throws MongoTrekFailureException {
-        LOGGER.info("DATABASE MIGRATIONS");
+        return status(false);
+    }
+
+    /**
+     * Report the status of the migrations and provided commands.  Does not apply the migrations.
+     *
+     * @param logStatus flag indicating if the state should be logged
+     * @return The trek state
+     * @throws MongoTrekFailureException If the status report fails for whatever reason.
+     */
+    public MongoTrekState status(boolean logStatus) throws MongoTrekFailureException {
+        if (logStatus)
+            LOGGER.info("DATABASE MIGRATIONS");
         MigrationCommands commands = commandsFactory().getCommands(migrationsFile);
         MongoTrekState state = migrationsService().getState(commands);
         try {
-            logStatus("status", state.getCurrentVersion());
-            LOGGER.info("     Migrations :");
-
-            state.getMigrations().stream().forEach(this::reportMigration);
+            if (logStatus) {
+                logStatus("status", state.getCurrentVersion());
+                LOGGER.info("     Migrations :");
+                state.getMigrations().forEach(this::reportMigration);
+            }
 
             return state;
         } catch (Exception e) {
-            LOGGER.error("Error in commands and cannot provide status", e);
+            if (logStatus)
+                LOGGER.error("Error in commands and cannot provide status", e);
             throw new MongoTrekFailureException(e);
         } finally {
             if (!this.providedDatabase) this.mongo.close();

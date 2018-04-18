@@ -6,7 +6,7 @@
 
     <groupId>net.ozwolf</groupId>
     <artifactId>mongo-trek</artifactId>
-    <version>1.1.1</version>
+    <version>1.2.0</version>
     <name>mongoTrek</name>
     <description>Java library for managing MongoDB schema migrations.</description>
     <url>https://github.com/ozwolf-software/mongo-trek</url>
@@ -23,19 +23,19 @@
         <compile.encoding>UTF-8</compile.encoding>
 
         <!-- Runtime Libraries -->
-        <joda.time.version>2.9.4</joda.time.version>
-        <commons.lang.version>3.5</commons.lang.version>
-        <commons.io.version>2.5</commons.io.version>
-        <maven.artifact.version>3.3.9</maven.artifact.version>
-        <jackson.version>2.8.5</jackson.version>
+        <joda.time.version>2.9.9</joda.time.version>
+        <commons.lang.version>3.7</commons.lang.version>
+        <commons.io.version>2.6</commons.io.version>
+        <maven.artifact.version>3.5.3</maven.artifact.version>
+        <jackson.version>2.9.5</jackson.version>
         <mongo.version>3.2.0</mongo.version>
         <slf4j.version>1.7.25</slf4j.version>
 
         <!-- Testing Libraries -->
         <junit.version>4.12</junit.version>
-        <assertj.version>3.6.1</assertj.version>
-        <mockito.version>2.4.2</mockito.version>
-        <fongo.version>2.0.11</fongo.version>
+        <assertj.version>3.9.1</assertj.version>
+        <mockito.version>2.18.0</mockito.version>
+        <fongo.version>2.1.1</fongo.version>
         <logback.version>1.2.3</logback.version>
     </properties>
 
