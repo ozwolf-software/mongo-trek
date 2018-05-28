@@ -8,6 +8,8 @@
 
 This library is a "roll-forward" migration tool, meaning that to rollback changes, new migrations are required to undertake this task.
 
+**Note**: As of version `2.0.0` mongoTrek only supports MongoDB version `3.4` and later.
+
 ## Java Mongo Migrations Upgrade
 
 mongoTrek is a fork from the [Java Mongo Migrations](https://github.com/ozwolf-software/java-mongo-migrations) project.  As such, projects that have previously managed migrations using this project can upgrade to mongoTrek and it will understand the previous migrations schema version collection documents.
@@ -36,13 +38,15 @@ As part of your own project, you will need to include the following dependencies
 
 #### Mongo Java Driver
 
-Build Version: `3.2.0`
+As of 
+
+Build Version: `3.4.3`
 
 ```xml
 <dependency>
     <groupId>org.mongodb</groupId>
     <artifactId>mongo-java-driver</artifactId>
-    <version>[3.2.0,)</version>
+    <version>[3.4.3,)</version>
 </dependency>
 ```
 
@@ -93,6 +97,10 @@ migrations:
         ]
       }
 ```
+
+#### Map-Reduce Forced Collection Creation
+
+If mongoTrek encouters a `mapReduce` command, it will ensure the collection being reduced exists.  If it doesn't, it will run a simple `createCollection` call.  It will use the default collection settings defined [here](https://docs.mongodb.com/manual/reference/command/create/#dbcmd.create) in the MongoDB documentation.
 
 #### Embedded Functions
 

@@ -24,7 +24,15 @@ migrations:
         { town: "Shelbyville", country: "United States" }
       ]
     }
-  - version: 2.0.0.1
+  - version: 2.0.1
+    description: Map reduce on non-existent collection
+    command: {
+      mapReduce: "third_migration",
+      map: "function() { emit(this.country, 1); }",
+      reduce: "function(country, towns) { return Array.sum(towns); }",
+      out: "third_migration_work"
+    }
+  - version: 3.0.0
     description: I will always fail
     command: {
       rubbish: "this should be unrecognised"

@@ -5,23 +5,24 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.github.fakemongo.FongoException;
-import com.github.fakemongo.junit.FongoRule;
+import com.mongodb.MongoCommandException;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import net.ozwolf.mongo.migrations.exception.MongoTrekFailureException;
 import net.ozwolf.mongo.migrations.internal.domain.Migration;
 import net.ozwolf.mongo.migrations.internal.domain.MigrationStatus;
+import net.ozwolf.mongo.migrations.rule.MongoDBServerRule;
 import org.assertj.core.api.Condition;
 import org.bson.Document;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
 
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -35,8 +36,9 @@ import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
 
 public class MongoTrekIntegrationTest {
+    @ClassRule
     @Rule
-    public FongoRule fongo = new FongoRule("migration_test", false);
+    public final static MongoDBServerRule DATABASE = new MongoDBServerRule();
 
     private MongoDatabase database;
 
@@ -49,7 +51,7 @@ public class MongoTrekIntegrationTest {
 
     @Before
     public void setUp() {
-        this.database = fongo.getDatabase();
+        this.database = DATABASE.getDatabase();
 
         this.database.getCollection(SCHEMA_VERSION_COLLECTION).drop();
         this.database.getCollection("first_migrations").drop();
@@ -107,15 +109,16 @@ public class MongoTrekIntegrationTest {
             if (!(e instanceof MongoTrekFailureException))
                 fail(String.format("Expected exception of [ %s ], but got [ %s ]", MongoTrekFailureException.class.getSimpleName(), e.getClass().getSimpleName()));
 
-            assertThat(e.getCause()).isInstanceOf(FongoException.class);
-            assertThat(e.getMessage()).isEqualTo("mongoTrek failed: Not implemented for command : { \"rubbish\" : \"this should be unrecognised\"}");
+            assertThat(e.getCause()).isInstanceOf(MongoCommandException.class);
+            assertThat(e.getMessage()).contains("mongoTrek failed: Command failed with error 59: 'no such command: 'rubbish', bad cmd: '{ rubbish: \"this should be unrecognised\" }''");
 
             validateMigrations(
                     migrationOf("1.0.0", MigrationStatus.Successful),
                     migrationOf("1.0.1", MigrationStatus.Successful),
                     migrationOf("1.0.2", MigrationStatus.Successful),
                     migrationOf("2.0.0", MigrationStatus.Successful),
-                    migrationOf("2.0.0.1", MigrationStatus.Failed)
+                    migrationOf("2.0.1", MigrationStatus.Successful),
+                    migrationOf("3.0.0", MigrationStatus.Failed)
             );
 
             assertThat(this.database.getCollection("first_migrations").count(and(Filters.eq("name", "Homer Simpson"), Filters.eq("age", 37)))).isEqualTo(1L);
@@ -126,17 +129,18 @@ public class MongoTrekIntegrationTest {
             List<ILoggingEvent> events = captor.getAllValues();
             assertThat(events)
                     .areAtLeastOne(loggedMessage("DATABASE MIGRATIONS"))
-                    .areAtLeastOne(loggedMessage("       Database : [ migration_test ]"))
+                    .areAtLeastOne(loggedMessage("       Database : [ " + MongoDBServerRule.SCHEMA_NAME + " ]"))
                     .areAtLeastOne(loggedMessage(" Schema Version : [ _schema_version ]"))
                     .areAtLeastOne(loggedMessage("         Action : [ migrate ]"))
                     .areAtLeastOne(loggedMessage("Current Version : [ 1.0.1 ]"))
-                    .areAtLeastOne(loggedMessage("       Applying : [ 1.0.2 ] -> [ 2.0.0.1 ]"))
+                    .areAtLeastOne(loggedMessage("       Applying : [ 1.0.2 ] -> [ 3.0.0 ]"))
                     .areAtLeastOne(loggedMessage("     Migrations :"))
                     .areAtLeastOne(loggedMessage("       1.0.2 : Failed last time migration"))
                     .areAtLeastOne(loggedMessage("       2.0.0 : Brand new migration"))
-                    .areAtLeastOne(loggedMessage("       2.0.0.1 : I will always fail"))
+                    .areAtLeastOne(loggedMessage("       2.0.1 : Map reduce on non-existent collection"))
+                    .areAtLeastOne(loggedMessage("       3.0.0 : I will always fail"))
                     .areAtLeastOne(loggedMessage("Error applying migration(s)"))
-                    .areAtLeastOne(loggedMessage(">>> [ 2 ] migrations applied in [ 0 seconds ] <<<"));
+                    .areAtLeastOne(loggedMessage(">>> [ 3 ] migrations applied in [ 0 seconds ] <<<"));
         }
     }
 
@@ -150,7 +154,7 @@ public class MongoTrekIntegrationTest {
         verify(appender, atLeastOnce()).doAppend(captor.capture());
         List<ILoggingEvent> events = captor.getAllValues();
         assertThat(events).areAtLeastOne(loggedMessage("DATABASE MIGRATIONS"))
-                .areAtLeastOne(loggedMessage("       Database : [ migration_test ]"))
+                .areAtLeastOne(loggedMessage("       Database : [ " + MongoDBServerRule.SCHEMA_NAME + " ]"))
                 .areAtLeastOne(loggedMessage(" Schema Version : [ _schema_version ]"))
                 .areAtLeastOne(loggedMessage("         Action : [ status ]"))
                 .areAtLeastOne(loggedMessage("Current Version : [ 1.0.1 ]"))
@@ -163,7 +167,9 @@ public class MongoTrekIntegrationTest {
                 .areAtLeastOne(loggedMessage(String.format("          Tags: [ Failed ] [ %s ] [ ERROR: Something went horribly wrong! ]", toTimeStamp("2014-12-05T09:11:01+1100"))))
                 .areAtLeastOne(loggedMessage("       2.0.0 : Brand new migration"))
                 .areAtLeastOne(loggedMessage("          Tags: [ Pending ]"))
-                .areAtLeastOne(loggedMessage("       2.0.0.1 : I will always fail"))
+                .areAtLeastOne(loggedMessage("       2.0.1 : Map reduce on non-existent collection"))
+                .areAtLeastOne(loggedMessage("          Tags: [ Pending ]"))
+                .areAtLeastOne(loggedMessage("       3.0.0 : I will always fail"))
                 .areAtLeastOne(loggedMessage("          Tags: [ Pending ]"));
     }
 

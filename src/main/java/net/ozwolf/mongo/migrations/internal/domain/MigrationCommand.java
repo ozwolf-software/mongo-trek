@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.StreamSupport;
 
 @JsonDeserialize
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -51,8 +52,17 @@ public class MigrationCommand {
     }
 
     public void migrate(MongoDatabase database) {
+        ensureMapReduceCollection(database);
         database.runCommand(command);
     }
 
+    private void ensureMapReduceCollection(MongoDatabase database){
+        String collection = command.getString("mapReduce", null);
+        if (collection == null) return;
 
+        boolean exists = StreamSupport.stream(database.listCollectionNames().spliterator(), false)
+                .anyMatch(c -> c.equalsIgnoreCase(collection));
+
+        if (!exists) database.createCollection(collection);
+    }
 }
