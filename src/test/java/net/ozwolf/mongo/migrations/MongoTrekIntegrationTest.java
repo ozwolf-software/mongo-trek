@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import static com.mongodb.client.model.Filters.and;
 import static net.ozwolf.mongo.migrations.matchers.LoggingMatchers.loggedMessage;
@@ -123,6 +124,10 @@ public class MongoTrekIntegrationTest {
 
             assertThat(this.database.getCollection("first_migrations").count(and(Filters.eq("name", "Homer Simpson"), Filters.eq("age", 37)))).isEqualTo(1L);
             assertThat(this.database.getCollection("second_migrations").count(and(Filters.eq("town", "Shelbyville"), Filters.eq("country", "United States")))).isEqualTo(1L);
+
+            assertThat(this.database.listCollectionNames())
+                    .areAtLeastOne(new Condition<>(v -> v.equalsIgnoreCase("third_migration"), "collection_name=third_migration"))
+                    .areAtLeastOne(new Condition<>(v -> v.equalsIgnoreCase("third_migration_work"), "collection_name=third_migration_work"));
 
             verify(appender, atLeastOnce()).doAppend(captor.capture());
 
