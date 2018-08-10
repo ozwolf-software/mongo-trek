@@ -4,7 +4,6 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
-import com.github.fakemongo.FongoException;
 import com.mongodb.MongoCommandException;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
@@ -27,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 import static com.mongodb.client.model.Filters.and;
 import static net.ozwolf.mongo.migrations.matchers.LoggingMatchers.loggedMessage;
@@ -111,7 +109,7 @@ public class MongoTrekIntegrationTest {
                 fail(String.format("Expected exception of [ %s ], but got [ %s ]", MongoTrekFailureException.class.getSimpleName(), e.getClass().getSimpleName()));
 
             assertThat(e.getCause()).isInstanceOf(MongoCommandException.class);
-            assertThat(e.getMessage()).contains("mongoTrek failed: Command failed with error 59: 'no such command: 'rubbish', bad cmd: '{ rubbish: \"this should be unrecognised\" }''");
+            assertThat(e.getMessage()).contains("mongoTrek failed: Command failed with error 59 (CommandNotFound): 'no such command: 'rubbish', bad cmd: '{ rubbish: \"this should be unrecognised\" }''");
 
             validateMigrations(
                     migrationOf("1.0.0", MigrationStatus.Successful),

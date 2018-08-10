@@ -6,7 +6,7 @@
 
     <groupId>net.ozwolf</groupId>
     <artifactId>mongo-trek</artifactId>
-    <version>2.0.0</version>
+    <version>2.0.1</version>
     <name>mongoTrek</name>
     <description>Java library for managing MongoDB schema migrations.</description>
     <url>https://github.com/ozwolf-software/mongo-trek</url>
@@ -28,14 +28,13 @@
         <commons.io.version>2.6</commons.io.version>
         <maven.artifact.version>3.5.3</maven.artifact.version>
         <jackson.version>2.9.5</jackson.version>
-        <mongo.version>3.4.3</mongo.version>
+        <mongo.version>3.8.0</mongo.version>
         <slf4j.version>1.7.25</slf4j.version>
 
         <!-- Testing Libraries -->
         <junit.version>4.12</junit.version>
         <assertj.version>3.9.1</assertj.version>
         <mockito.version>2.18.0</mockito.version>
-        <fongo.version>2.1.1</fongo.version>
         <embedded.mongo.version>2.0.3</embedded.mongo.version>
         <logback.version>1.2.3</logback.version>
     </properties>
@@ -145,12 +144,6 @@
             <groupId>de.flapdoodle.embed</groupId>
             <artifactId>de.flapdoodle.embed.mongo</artifactId>
             <version>${embedded.mongo.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.github.fakemongo</groupId>
-            <artifactId>fongo</artifactId>
-            <version>${fongo.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

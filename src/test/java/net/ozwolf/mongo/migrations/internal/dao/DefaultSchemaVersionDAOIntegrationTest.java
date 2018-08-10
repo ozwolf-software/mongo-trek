@@ -1,12 +1,13 @@
 package net.ozwolf.mongo.migrations.internal.dao;
 
-import com.github.fakemongo.junit.FongoRule;
 import com.mongodb.client.MongoCollection;
 import net.ozwolf.mongo.migrations.internal.domain.Migration;
 import net.ozwolf.mongo.migrations.internal.domain.MigrationStatus;
+import net.ozwolf.mongo.migrations.rule.MongoDBServerRule;
 import org.bson.Document;
 import org.joda.time.DateTime;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -19,8 +20,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 public class DefaultSchemaVersionDAOIntegrationTest {
+
+    @ClassRule
     @Rule
-    public final FongoRule fongo = new FongoRule("migrations_test");
+    public final static MongoDBServerRule DATABASE = new MongoDBServerRule();
 
     private MongoCollection<Document> collection;
 
@@ -28,7 +31,7 @@ public class DefaultSchemaVersionDAOIntegrationTest {
 
     @Before
     public void setUp() {
-        this.collection = fongo.getDatabase().getCollection(SCHEMA_VERSION_COLLECTION);
+        this.collection = DATABASE.getDatabase().getCollection(SCHEMA_VERSION_COLLECTION);
 
         this.collection.drop();
 
