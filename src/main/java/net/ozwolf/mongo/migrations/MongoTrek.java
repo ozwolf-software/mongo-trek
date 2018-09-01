@@ -12,6 +12,7 @@ import net.ozwolf.mongo.migrations.internal.domain.Migration;
 import net.ozwolf.mongo.migrations.internal.domain.MigrationCommands;
 import net.ozwolf.mongo.migrations.internal.factory.MigrationCommandsFactory;
 import net.ozwolf.mongo.migrations.internal.service.MigrationsService;
+import org.bson.Document;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 import org.slf4j.Logger;
@@ -195,8 +196,8 @@ public class MongoTrek {
         try {
             LOGGER.info(String.format("       %s : %s", migration.getVersion(), migration.getDescription()));
             schemaVersionDAO().save(migration.running());
-            migration.getCommand().migrate(this.database);
-            schemaVersionDAO().save(migration.successful());
+            Document result = migration.getCommand().migrate(this.database);
+            schemaVersionDAO().save(migration.successful(result));
             successfulCount.incrementAndGet();
         } catch (Exception e) {
             schemaVersionDAO().save(migration.failed(e));

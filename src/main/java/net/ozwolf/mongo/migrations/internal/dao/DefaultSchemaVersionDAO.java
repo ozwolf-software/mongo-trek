@@ -1,13 +1,14 @@
 package net.ozwolf.mongo.migrations.internal.dao;
 
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.model.ReplaceOptions;
 import net.ozwolf.mongo.migrations.internal.domain.Migration;
 import net.ozwolf.mongo.migrations.internal.domain.MigrationStatus;
 import org.bson.Document;
 import org.joda.time.DateTime;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -35,7 +36,8 @@ public class DefaultSchemaVersionDAO implements SchemaVersionDAO {
                                         Optional.ofNullable(d.getDate("started")).map(DateTime::new).orElse(null),
                                         Optional.ofNullable(d.getDate("finished")).map(DateTime::new).orElse(null),
                                         MigrationStatus.valueOf(d.getString("status")),
-                                        d.getString("failureMessage")
+                                        d.getString("failureMessage"),
+                                        d.get("result", Document.class)
                                 )
                         )
                 );
@@ -50,16 +52,17 @@ public class DefaultSchemaVersionDAO implements SchemaVersionDAO {
                 .append("started", Optional.ofNullable(migration.getStarted()).map(DateTime::toDate).orElse(null))
                 .append("finished", Optional.ofNullable(migration.getFinished()).map(DateTime::toDate).orElse(null))
                 .append("status", migration.getStatus().name())
-                .append("failureMessage", migration.getFailureMessage());
+                .append("failureMessage", migration.getFailureMessage())
+                .append("result", migration.getResult());
 
-        collection.replaceOne(eq("version", migration.getVersion()), d, new UpdateOptions().upsert(true));
+        collection.replaceOne(eq("version", migration.getVersion()), d, new ReplaceOptions().upsert(true));
     }
 
     @Override
     public Optional<Migration> findLastSuccessful() {
         return this.findAll().stream()
                 .filter(m -> m.getStatus() == MigrationStatus.Successful)
-                .sorted((m1, m2) -> m1.getVersion().compareTo(m2.getVersion()))
+                .sorted(Comparator.comparing(Migration::getVersion))
                 .reduce((p, c) -> c);
     }
 }

@@ -4,13 +4,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.maven.artifact.versioning.ComparableVersion;
+import org.bson.Document;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.joda.time.Seconds.secondsBetween;
 
@@ -22,6 +20,7 @@ public class Migration {
     private DateTime finished;
     private MigrationStatus status;
     private String failureMessage;
+    private Map<String, Object> result;
 
     private MigrationCommand command;
 
@@ -33,7 +32,8 @@ public class Migration {
                      DateTime started,
                      DateTime finished,
                      MigrationStatus status,
-                     String failureMessage) {
+                     String failureMessage,
+                     Map<String, Object> result) {
         this.version = version;
         this.description = description;
         this.author = Optional.ofNullable(author).orElse(DEFAULT_AUTHOR);
@@ -41,10 +41,11 @@ public class Migration {
         this.finished = finished;
         this.status = status;
         this.failureMessage = failureMessage;
+        this.result = result;
     }
 
     public Migration(MigrationCommand command) {
-        this(command.getVersion(), command.getDescription(), command.getAuthor(), null, null, MigrationStatus.Pending, null);
+        this(command.getVersion(), command.getDescription(), command.getAuthor(), null, null, MigrationStatus.Pending, null, null);
         this.command = command;
     }
 
@@ -85,6 +86,13 @@ public class Migration {
         return status;
     }
 
+    public Map<String, Object> getResult() {
+        if (status != MigrationStatus.Successful)
+            throw new IllegalStateException("Migration is not successful.  There is not result to retrieve.");
+
+        return Optional.ofNullable(result).orElseGet(HashMap::new);
+    }
+
     public boolean isSuccessful() {
         return status == MigrationStatus.Successful;
     }
@@ -118,9 +126,10 @@ public class Migration {
         return this;
     }
 
-    public Migration successful() {
+    public Migration successful(Document result) {
         this.finished = DateTime.now();
         this.status = MigrationStatus.Successful;
+        this.result = result;
         return this;
     }
 
@@ -151,7 +160,7 @@ public class Migration {
     }
 
     public static Comparator<Migration> sortByVersionAscending() {
-        return (m1, m2) -> m1.getComparableVersion().compareTo(m2.getComparableVersion());
+        return Comparator.comparing(Migration::getComparableVersion);
     }
 
     public static Comparator<Migration> sortByVersionDescending() {

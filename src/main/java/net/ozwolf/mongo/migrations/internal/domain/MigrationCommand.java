@@ -8,6 +8,7 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.client.MongoDatabase;
 import org.apache.commons.lang3.StringUtils;
+import org.bson.Document;
 
 import java.util.Map;
 import java.util.Optional;
@@ -51,9 +52,9 @@ public class MigrationCommand {
         return command;
     }
 
-    public void migrate(MongoDatabase database) {
+    public Document migrate(MongoDatabase database) {
         ensureMapReduceCollection(database);
-        database.runCommand(command);
+        return database.runCommand(command);
     }
 
     private void ensureMapReduceCollection(MongoDatabase database){

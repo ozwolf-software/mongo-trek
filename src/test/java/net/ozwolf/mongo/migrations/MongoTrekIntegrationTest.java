@@ -56,9 +56,9 @@ public class MongoTrekIntegrationTest {
         this.database.getCollection("first_migrations").drop();
         this.database.getCollection("second_migrations").drop();
 
-        persistMigration("1.0.0", "Applied migration", "Homer Simpson", "2014-12-05T09:00:00.000+1100", "2014-12-05T09:00:02.000+1100", MigrationStatus.Successful, null);
-        persistMigration("1.0.1", "Another applied migration", null, "2014-12-05T09:10:00.000+1100", "2014-12-05T09:11:00.000+1100", MigrationStatus.Successful, null);
-        persistMigration("1.0.2", "Failed last time migration", "Marge Simpson", "2014-12-05T09:11:01.000+1100", null, MigrationStatus.Failed, "Something went horribly wrong!");
+        persistMigration("1.0.0", "Applied migration", "Homer Simpson", "2014-12-05T09:00:00.000+1100", "2014-12-05T09:00:02.000+1100", MigrationStatus.Successful, null, new Document("n", 1));
+        persistMigration("1.0.1", "Another applied migration", null, "2014-12-05T09:10:00.000+1100", "2014-12-05T09:11:00.000+1100", MigrationStatus.Successful, null, new Document("n", 1));
+        persistMigration("1.0.2", "Failed last time migration", "Marge Simpson", "2014-12-05T09:11:01.000+1100", null, MigrationStatus.Failed, "Something went horribly wrong!", null);
 
         ((Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)).setLevel(Level.INFO);
         LOGGER.setLevel(Level.INFO);
@@ -112,16 +112,16 @@ public class MongoTrekIntegrationTest {
             assertThat(e.getMessage()).contains("mongoTrek failed: Command failed with error 59 (CommandNotFound): 'no such command: 'rubbish', bad cmd: '{ rubbish: \"this should be unrecognised\" }''");
 
             validateMigrations(
-                    migrationOf("1.0.0", MigrationStatus.Successful),
-                    migrationOf("1.0.1", MigrationStatus.Successful),
-                    migrationOf("1.0.2", MigrationStatus.Successful),
-                    migrationOf("2.0.0", MigrationStatus.Successful),
-                    migrationOf("2.0.1", MigrationStatus.Successful),
+                    migrationOf("1.0.0", MigrationStatus.Successful, new Document("n", 1)),
+                    migrationOf("1.0.1", MigrationStatus.Successful, new Document("n", 1)),
+                    migrationOf("1.0.2", MigrationStatus.Successful, new Document("n", 2).append("ok", 1.0)),
+                    migrationOf("2.0.0", MigrationStatus.Successful, new Document("n", 2).append("ok", 1.0)),
+                    migrationOf("2.0.1", MigrationStatus.Successful, new Document("result", "third_migration_work").append("ok", 1.0)),
                     migrationOf("3.0.0", MigrationStatus.Failed)
             );
 
-            assertThat(this.database.getCollection("first_migrations").count(and(Filters.eq("name", "Homer Simpson"), Filters.eq("age", 37)))).isEqualTo(1L);
-            assertThat(this.database.getCollection("second_migrations").count(and(Filters.eq("town", "Shelbyville"), Filters.eq("country", "United States")))).isEqualTo(1L);
+            assertThat(this.database.getCollection("first_migrations").countDocuments(and(Filters.eq("name", "Homer Simpson"), Filters.eq("age", 37)))).isEqualTo(1L);
+            assertThat(this.database.getCollection("second_migrations").countDocuments(and(Filters.eq("town", "Shelbyville"), Filters.eq("country", "United States")))).isEqualTo(1L);
 
             assertThat(this.database.listCollectionNames())
                     .areAtLeastOne(new Condition<>(v -> v.equalsIgnoreCase("third_migration"), "collection_name=third_migration"))
@@ -146,7 +146,6 @@ public class MongoTrekIntegrationTest {
                     .areAtLeastOne(loggedMessage(">>> [ 3 ] migrations applied in [ 0 seconds ] <<<"));
         }
     }
-
 
     @Test
     public void shouldReportOnMigrations() throws MongoTrekFailureException {
@@ -195,7 +194,8 @@ public class MongoTrekIntegrationTest {
                                         Optional.ofNullable(d.getDate("started")).map(DateTime::new).orElse(null),
                                         Optional.ofNullable(d.getDate("finished")).map(DateTime::new).orElse(null),
                                         MigrationStatus.valueOf(d.getString("status")),
-                                        d.getString("failureMessage")
+                                        d.getString("failureMessage"),
+                                        d.get("result", Document.class)
                                 )
                         )
                 );
@@ -212,7 +212,8 @@ public class MongoTrekIntegrationTest {
                                   String started,
                                   String finished,
                                   MigrationStatus status,
-                                  String failureMessage) {
+                                  String failureMessage,
+                                  Document result) {
         Document document = new Document();
         document.put("version", version);
         document.put("description", description);
@@ -221,6 +222,7 @@ public class MongoTrekIntegrationTest {
         document.put("finished", Optional.ofNullable(finished).map(DateTime::parse).map(DateTime::toDate).orElse(null));
         document.put("status", status.name());
         document.put("failureMessage", failureMessage);
+        document.put("result", result);
 
         this.database.getCollection(SCHEMA_VERSION_COLLECTION).insertOne(document);
     }

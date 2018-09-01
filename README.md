@@ -38,9 +38,9 @@ As part of your own project, you will need to include the following dependencies
 
 #### Mongo Java Driver
 
-As of 
+This library was tested against the `3.8.0` MongoDB library version.  If you require support for `3.4.3`, refer to the `2.0.1` version of the library. 
 
-Build Version: `3.4.3`
+Build Version: `3.8.0`
 
 ```xml
 <dependency>
@@ -148,6 +148,12 @@ public class MyApplication {
 }
 ```
 
+### Migration Results
+
+As of version `3.0.0` of this library, the `Migration` class now contains the migration result as a `Map<String, Object>`.
+
+With a `MongoTrekState` you can get the list of applied transactions and review the migration command result.
+
 ### Logging Configuration
 
 mongoTrek uses the [LOGBack](http://logback.qos.ch) project log outputs.
@@ -160,8 +166,3 @@ Messages are logged via the following levels:
 
 + `INFO` - All migration information (ie. configuration, versions, migration information)
 + `ERROR` - If an error occurs (ie. invalid migration command definition or general connection/execution errors)
-
-## Acknowledgements
-
-+ [Fongo](https://github.com/foursquare/fongo)
-+ [LOGBack](http://logback.qos.ch)

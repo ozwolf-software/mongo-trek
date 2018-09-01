@@ -4,6 +4,7 @@ import net.ozwolf.mongo.migrations.MongoTrekState;
 import net.ozwolf.mongo.migrations.exception.DuplicateVersionException;
 import net.ozwolf.mongo.migrations.internal.dao.SchemaVersionDAO;
 import net.ozwolf.mongo.migrations.internal.domain.*;
+import org.bson.Document;
 import org.joda.time.DateTime;
 import org.junit.Rule;
 import org.junit.Test;
@@ -25,7 +26,7 @@ public class MigrationsServiceTest {
     public ExpectedException exception = ExpectedException.none();
 
     @Test
-    public void shouldReturnPendingStateFromMigrationState() throws Throwable {
+    public void shouldReturnPendingStateFromMigrationState() {
         Migration previous1 = record("1.0.0", MigrationStatus.Successful);
         Migration previous2 = record("1.0.1", MigrationStatus.Successful);
         Migration previous3 = record("1.0.2", MigrationStatus.Failed);
@@ -53,7 +54,7 @@ public class MigrationsServiceTest {
     }
 
     @Test
-    public void shouldReturnAllMigrations() throws Throwable {
+    public void shouldReturnAllMigrations() {
         Migration previous1 = record("1.0.0", MigrationStatus.Successful);
         Migration previous2 = record("1.0.1", MigrationStatus.Successful);
         Migration previous3 = record("1.0.2", MigrationStatus.Failed);
@@ -80,7 +81,7 @@ public class MigrationsServiceTest {
     }
 
     @Test
-    public void shouldThrowDuplicateVersionException() throws Throwable {
+    public void shouldThrowDuplicateVersionException() {
         when(schemaVersionDAO.findAll()).thenReturn(migrations());
 
         MigrationCommands commands = commands(
@@ -102,7 +103,8 @@ public class MigrationsServiceTest {
                 DateTime.now(),
                 (status == MigrationStatus.Successful) ? DateTime.now() : null,
                 status,
-                (status == MigrationStatus.Failed) ? "Failure" : null
+                (status == MigrationStatus.Failed) ? "Failure" : null,
+                (status == MigrationStatus.Failed) ? null : new Document("n", 1)
         );
     }
 
