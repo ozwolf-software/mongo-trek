@@ -87,8 +87,7 @@ public class Migration {
     }
 
     public Map<String, Object> getResult() {
-        if (status != MigrationStatus.Successful)
-            throw new IllegalStateException("Migration is not successful.  There is not result to retrieve.");
+        if (status != MigrationStatus.Successful) return null;
 
         return Optional.ofNullable(result).orElseGet(HashMap::new);
     }
