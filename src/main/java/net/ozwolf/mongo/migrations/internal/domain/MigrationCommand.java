@@ -54,10 +54,13 @@ public class MigrationCommand {
 
     public Document migrate(MongoDatabase database) {
         ensureMapReduceCollection(database);
-        return database.runCommand(command);
+        Document result = database.runCommand(command);
+        if (result.get("$clusterTime") != null)
+            result.append("clusterTime", result.get("$clusterTime")).remove("$clusterTime");
+        return result;
     }
 
-    private void ensureMapReduceCollection(MongoDatabase database){
+    private void ensureMapReduceCollection(MongoDatabase database) {
         String collection = command.getString("mapReduce", null);
         if (collection == null) return;
 
