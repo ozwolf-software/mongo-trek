@@ -22,7 +22,9 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -120,7 +122,8 @@ public class MongoTrekIntegrationTest {
                     migrationOf("3.0.0", MigrationStatus.Failed)
             );
 
-            assertThat(this.database.getCollection("first_migrations").countDocuments(and(Filters.eq("name", "Homer Simpson"), Filters.eq("age", 37)))).isEqualTo(1L);
+            Date updatedAt = Date.from(Instant.parse("2018-12-18T00:29:33.123Z"));
+            assertThat(this.database.getCollection("first_migrations").countDocuments(and(Filters.eq("name", "Homer Simpson"), Filters.eq("age", 37), Filters.eq("updatedAt", updatedAt)))).isEqualTo(1L);
             assertThat(this.database.getCollection("second_migrations").countDocuments(and(Filters.eq("town", "Shelbyville"), Filters.eq("country", "United States")))).isEqualTo(1L);
 
             assertThat(this.database.listCollectionNames())

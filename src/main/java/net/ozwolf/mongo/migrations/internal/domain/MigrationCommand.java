@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.client.MongoDatabase;
+import net.ozwolf.mongo.migrations.internal.util.StrictJsonUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 
@@ -33,7 +34,8 @@ public class MigrationCommand {
         this.version = version;
         this.description = description;
         this.author = Optional.ofNullable(author).orElse(Migration.DEFAULT_AUTHOR);
-        this.command = new BasicDBObject(command);
+        Map<String, Object> interpolated = StrictJsonUtils.interpolate(command);
+        this.command = new BasicDBObject(interpolated);
     }
 
     public final String getVersion() {

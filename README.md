@@ -118,6 +118,12 @@ migrations:
        }
 ```
 
+#### Dates & Times
+
+This library is designed to handle the `$date` strict JSON operator.  Internally, it will convert the value into a valid Java `Date` object for the Java driver to interpret correctly.
+
+The library currently supports date, time and date-time strings in the formats compatible with following [DateTimeFormatter](https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html) predefined formatters.
+
 ### Running Your Migrations
 
 To run your migrations, provide either a [MongoDB Connection String URI](https://docs.mongodb.com/manual/reference/connection-string/) or a `MongoDatabase` instance on initialization.
