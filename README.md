@@ -29,7 +29,7 @@ mongoTrek is a fork from the [Java Mongo Migrations](https://github.com/ozwolf-s
 ### Gradle
 
 ```gradle
-compile 'net.ozwolf:mongo-trek:${current.version}'
+compile 'net.ozwolf:mongo-trek:3.1.1'
 ```
 
 ### Provided Dependencies
