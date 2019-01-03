@@ -22,7 +22,7 @@ mongoTrek is a fork from the [Java Mongo Migrations](https://github.com/ozwolf-s
 <dependency>
     <groupId>net.ozwolf</groupId>
     <artifactId>mongo-trek</artifactId>
-    <version>${current.version}</version>
+    <version>3.1.1</version>
 </dependency>
 ```
 

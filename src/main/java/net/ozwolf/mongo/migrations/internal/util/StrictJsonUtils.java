@@ -23,6 +23,8 @@ public class StrictJsonUtils {
                     if (value instanceof List) {
                         List<Map<String, Object>> v = (List<Map<String, Object>>) value;
                         for (Map<String, Object> d : v) interpolateLeaf(d);
+                    } else if (value instanceof Map) {
+                        interpolateLeaf((Map<String, Object>) value);
                     }
                 }
             }
