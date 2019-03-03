@@ -11,6 +11,7 @@ import net.ozwolf.mongo.migrations.exception.MongoTrekFailureException;
 import net.ozwolf.mongo.migrations.internal.domain.Migration;
 import net.ozwolf.mongo.migrations.internal.domain.MigrationStatus;
 import net.ozwolf.mongo.migrations.rule.MongoDBServerRule;
+import net.ozwolf.mongo.migrations.testutils.DateTimeUtils;
 import org.assertj.core.api.Condition;
 import org.bson.Document;
 import org.junit.Before;
@@ -21,7 +22,6 @@ import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -163,11 +163,11 @@ public class MongoTrekIntegrationITCase {
                 .areAtLeastOne(loggedMessage("Current Version : [ 1.0.1 ]"))
                 .areAtLeastOne(loggedMessage("     Migrations :"))
                 .areAtLeastOne(loggedMessage("       1.0.0 : Applied migration"))
-                .areAtLeastOne(loggedMessage("          Tags: [ Successful ] [ 2014-12-05 09:00:00 ] [ 2 seconds ]"))
+                .areAtLeastOne(loggedMessage(String.format("          Tags: [ Successful ] [ %s ] [ 2 seconds ]", DateTimeUtils.formatDisplay("2014-12-05T09:00:00.000+1100"))))
                 .areAtLeastOne(loggedMessage("       1.0.1 : Another applied migration"))
-                .areAtLeastOne(loggedMessage("          Tags: [ Successful ] [ 2014-12-05 09:10:00 ] [ 60 seconds ]"))
+                .areAtLeastOne(loggedMessage(String.format("          Tags: [ Successful ] [ %s ] [ 60 seconds ]", DateTimeUtils.formatDisplay("2014-12-05T09:10:00.000+1100"))))
                 .areAtLeastOne(loggedMessage("       1.0.2 : Failed last time migration"))
-                .areAtLeastOne(loggedMessage("          Tags: [ Failed ] [ 2014-12-05 09:11:01 ] [ ERROR: Something went horribly wrong! ]"))
+                .areAtLeastOne(loggedMessage(String.format("          Tags: [ Failed ] [ %s ] [ ERROR: Something went horribly wrong! ]", DateTimeUtils.formatDisplay("2014-12-05T09:11:01.000+1100"))))
                 .areAtLeastOne(loggedMessage("       2.0.0 : Brand new migration"))
                 .areAtLeastOne(loggedMessage("          Tags: [ Pending ]"))
                 .areAtLeastOne(loggedMessage("       2.0.1 : Map reduce on non-existent collection"))
