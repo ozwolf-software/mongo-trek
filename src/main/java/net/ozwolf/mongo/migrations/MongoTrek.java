@@ -13,20 +13,19 @@ import net.ozwolf.mongo.migrations.internal.domain.MigrationCommands;
 import net.ozwolf.mongo.migrations.internal.factory.MigrationCommandsFactory;
 import net.ozwolf.mongo.migrations.internal.service.MigrationsService;
 import org.bson.Document;
-import org.joda.time.DateTime;
-import org.joda.time.Seconds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * <h1>Mongo Trek</h1>
  *
  * The mongoTrek main class allows an application to provide it's own `MongoDatabase` instance or MongoDB Connection string to then apply migrations to or report on the migration status of their database schema.
- *
  */
-@SuppressWarnings({"OptionalGetWithoutIsPresent", "WeakerAccess", "unused"})
+@SuppressWarnings({"WeakerAccess", "unused"})
 public class MongoTrek {
     private final MongoClient mongo;
     private final MongoDatabase database;
@@ -52,6 +51,9 @@ public class MongoTrek {
     public MongoTrek(String migrationsFile, String uri) {
         this.migrationsFile = migrationsFile;
         MongoClientURI clientURI = new MongoClientURI(uri);
+        if (clientURI.getDatabase() == null)
+            throw new IllegalArgumentException("URI [ " + uri + " ] must contain a database schema to connect to.");
+
         this.mongo = new MongoClient(clientURI);
         this.database = this.mongo.getDatabase(clientURI.getDatabase());
         this.providedDatabase = false;
@@ -102,7 +104,7 @@ public class MongoTrek {
             return state;
         }
 
-        DateTime start = DateTime.now();
+        Instant start = Instant.now();
         AtomicInteger successfulCount = new AtomicInteger(0);
 
         try {
@@ -125,8 +127,8 @@ public class MongoTrek {
             LOGGER.error("Error applying migration(s)", e);
             throw new MongoTrekFailureException(e);
         } finally {
-            DateTime finish = DateTime.now();
-            LOGGER.info(String.format(">>> [ %d ] migrations applied in [ %d seconds ] <<<", successfulCount.get(), Seconds.secondsBetween(start, finish).getSeconds()));
+            Instant finish = Instant.now();
+            LOGGER.info(String.format(">>> [ %d ] migrations applied in [ %d seconds ] <<<", successfulCount.get(), Duration.between(start, finish).getSeconds()));
             if (!this.providedDatabase) this.mongo.close();
         }
     }

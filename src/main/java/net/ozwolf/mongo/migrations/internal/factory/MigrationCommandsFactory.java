@@ -10,12 +10,12 @@ import org.apache.commons.io.IOUtils;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.Optional;
 
 public class MigrationCommandsFactory {
     private final static ObjectMapper MAPPER = new YAMLMapper();
 
-    @SuppressWarnings("unchecked")
     public MigrationCommands getCommands(String migrationsFile) throws MongoTrekFailureException {
         try {
             String source = load(migrationsFile).orElseThrow(() -> new MongoTrekFailureException(new IllegalArgumentException(String.format("Could not find migrations file [ %s ] on classpath or file system.", migrationsFile))));
@@ -30,9 +30,9 @@ public class MigrationCommandsFactory {
         File file = new File(migrationsFile);
         try {
             if (url != null) {
-                return Optional.ofNullable(IOUtils.toString(url.openStream()));
+                return Optional.ofNullable(IOUtils.toString(url.openStream(), Charset.defaultCharset()));
             } else if (file.exists()) {
-                return Optional.ofNullable(FileUtils.readFileToString(file));
+                return Optional.ofNullable(FileUtils.readFileToString(file, Charset.defaultCharset()));
             } else {
                 return Optional.empty();
             }

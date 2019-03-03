@@ -5,12 +5,12 @@ import net.ozwolf.mongo.migrations.internal.domain.Migration;
 import net.ozwolf.mongo.migrations.internal.domain.MigrationStatus;
 import net.ozwolf.mongo.migrations.rule.MongoDBServerRule;
 import org.bson.Document;
-import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,8 +18,7 @@ import static com.mongodb.client.model.Filters.eq;
 import static net.ozwolf.mongo.migrations.matchers.MigrationMatchers.migrationOf;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SuppressWarnings("OptionalGetWithoutIsPresent")
-public class DefaultSchemaVersionDAOIntegrationTest {
+public class DefaultSchemaVersionDAOITCase {
 
     @ClassRule
     @Rule
@@ -35,8 +34,8 @@ public class DefaultSchemaVersionDAOIntegrationTest {
 
         this.collection.drop();
 
-        persistMigration("1.0.0", "First migration", "Homer Simpson", "2014-12-05T09:00:00.000+1100", "2014-12-05T09:00:02.000+1100", MigrationStatus.Successful, null, new Document("n", 1));
-        persistMigration("1.0.1", "Second migration", "Homer Simpson", "2014-12-05T09:03:00.000+1100", null, MigrationStatus.Failed, "failure", null);
+        persistMigration("1.0.0", "First migration", "Homer Simpson", "2014-12-04T22:00:00.000Z", "2014-12-04T22:00:02.000Z", MigrationStatus.Successful, null, new Document("n", 1));
+        persistMigration("1.0.1", "Second migration", "Homer Simpson", "2014-12-04T22:03:00.000Z", null, MigrationStatus.Failed, "failure", null);
     }
 
     @Test
@@ -64,7 +63,16 @@ public class DefaultSchemaVersionDAOIntegrationTest {
 
     @Test
     public void shouldInsertVersionToDatabase() {
-        Migration migration = new Migration("1.0.2", "Failed migration", "Bart Simpson", DateTime.parse("2014-12-05T09:05:00.000+1100"), null, MigrationStatus.Failed, "This failed", null);
+        Migration migration = new Migration(
+                "1.0.2",
+                "Failed migration",
+                "Bart Simpson",
+                Instant.parse("2014-12-04T22:05:00.000Z"),
+                null,
+                MigrationStatus.Failed,
+                "This failed",
+                null
+        );
 
         assertThat(this.collection.countDocuments(eq("version", "1.0.2"))).isEqualTo(0L);
 
@@ -89,7 +97,16 @@ public class DefaultSchemaVersionDAOIntegrationTest {
 
         Document result = new Document("n", 1);
 
-        Migration migration = new Migration("1.0.1", "Second migration", "Homer Simpson", DateTime.parse("2014-12-05T09:03:00.000+1100"), DateTime.parse("2014-12-05T09:00:04.000+1100"), MigrationStatus.Successful, null, result);
+        Migration migration = new Migration(
+                "1.0.1",
+                "Second migration",
+                "Homer Simpson",
+                Instant.parse("2014-12-04T22:03:00.000Z"),
+                Instant.parse("2014-12-04T22:00:04.000Z"),
+                MigrationStatus.Successful,
+                null,
+                result
+        );
 
         SchemaVersionDAO dao = new DefaultSchemaVersionDAO(this.collection);
 
@@ -116,8 +133,8 @@ public class DefaultSchemaVersionDAOIntegrationTest {
         document.put("version", version);
         document.put("description", description);
         document.put("author", Optional.ofNullable(author).orElse(Migration.DEFAULT_AUTHOR));
-        document.put("started", Optional.ofNullable(started).map(DateTime::parse).map(DateTime::toDate).orElse(null));
-        document.put("finished", Optional.ofNullable(finished).map(DateTime::parse).map(DateTime::toDate).orElse(null));
+        document.put("started", Optional.ofNullable(started).map(Instant::parse).orElse(null));
+        document.put("finished", Optional.ofNullable(finished).map(Instant::parse).orElse(null));
         document.put("status", status.name());
         document.put("failureMessage", failureMessage);
         document.put("result", result);

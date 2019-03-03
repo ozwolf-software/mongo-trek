@@ -13,8 +13,6 @@ import net.ozwolf.mongo.migrations.internal.domain.MigrationStatus;
 import net.ozwolf.mongo.migrations.rule.MongoDBServerRule;
 import org.assertj.core.api.Condition;
 import org.bson.Document;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -23,6 +21,7 @@ import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -36,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
 
-public class MongoTrekIntegrationTest {
+public class MongoTrekIntegrationITCase {
     @ClassRule
     @Rule
     public final static MongoDBServerRule DATABASE = new MongoDBServerRule();
@@ -58,9 +57,9 @@ public class MongoTrekIntegrationTest {
         this.database.getCollection("first_migrations").drop();
         this.database.getCollection("second_migrations").drop();
 
-        persistMigration("1.0.0", "Applied migration", "Homer Simpson", "2014-12-05T09:00:00.000+1100", "2014-12-05T09:00:02.000+1100", MigrationStatus.Successful, null, new Document("n", 1));
-        persistMigration("1.0.1", "Another applied migration", null, "2014-12-05T09:10:00.000+1100", "2014-12-05T09:11:00.000+1100", MigrationStatus.Successful, null, new Document("n", 1));
-        persistMigration("1.0.2", "Failed last time migration", "Marge Simpson", "2014-12-05T09:11:01.000+1100", null, MigrationStatus.Failed, "Something went horribly wrong!", null);
+        persistMigration("1.0.0", "Applied migration", "Homer Simpson", "2014-12-04T22:00:00.000Z", "2014-12-04T22:00:02.000Z", MigrationStatus.Successful, null, new Document("n", 1));
+        persistMigration("1.0.1", "Another applied migration", null, "2014-12-04T22:10:00.000Z", "2014-12-04T22:11:00.000Z", MigrationStatus.Successful, null, new Document("n", 1));
+        persistMigration("1.0.2", "Failed last time migration", "Marge Simpson", "2014-12-04T22:11:01.000Z", null, MigrationStatus.Failed, "Something went horribly wrong!", null);
 
         ((Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)).setLevel(Level.INFO);
         LOGGER.setLevel(Level.INFO);
@@ -97,7 +96,6 @@ public class MongoTrekIntegrationTest {
                 .areAtLeastOne(loggedMessage("   No migrations to apply."));
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void shouldFailMigrationsOnLastMigration() {
         try {
@@ -165,11 +163,11 @@ public class MongoTrekIntegrationTest {
                 .areAtLeastOne(loggedMessage("Current Version : [ 1.0.1 ]"))
                 .areAtLeastOne(loggedMessage("     Migrations :"))
                 .areAtLeastOne(loggedMessage("       1.0.0 : Applied migration"))
-                .areAtLeastOne(loggedMessage(String.format("          Tags: [ Successful ] [ %s ] [ 2 seconds ]", toTimeStamp("2014-12-05T09:00:00+1100"))))
+                .areAtLeastOne(loggedMessage("          Tags: [ Successful ] [ 2014-12-05 09:00:00 ] [ 2 seconds ]"))
                 .areAtLeastOne(loggedMessage("       1.0.1 : Another applied migration"))
-                .areAtLeastOne(loggedMessage(String.format("          Tags: [ Successful ] [ %s ] [ 60 seconds ]", toTimeStamp("2014-12-05T09:10:00+1100"))))
+                .areAtLeastOne(loggedMessage("          Tags: [ Successful ] [ 2014-12-05 09:10:00 ] [ 60 seconds ]"))
                 .areAtLeastOne(loggedMessage("       1.0.2 : Failed last time migration"))
-                .areAtLeastOne(loggedMessage(String.format("          Tags: [ Failed ] [ %s ] [ ERROR: Something went horribly wrong! ]", toTimeStamp("2014-12-05T09:11:01+1100"))))
+                .areAtLeastOne(loggedMessage("          Tags: [ Failed ] [ 2014-12-05 09:11:01 ] [ ERROR: Something went horribly wrong! ]"))
                 .areAtLeastOne(loggedMessage("       2.0.0 : Brand new migration"))
                 .areAtLeastOne(loggedMessage("          Tags: [ Pending ]"))
                 .areAtLeastOne(loggedMessage("       2.0.1 : Map reduce on non-existent collection"))
@@ -178,10 +176,7 @@ public class MongoTrekIntegrationTest {
                 .areAtLeastOne(loggedMessage("          Tags: [ Pending ]"));
     }
 
-    private static String toTimeStamp(String timeStamp) {
-        return DateTime.parse(timeStamp).toDateTime(DateTimeZone.getDefault()).toString("yyyy-MM-dd HH:mm:ss");
-    }
-
+    @SuppressWarnings("Duplicates")
     @SafeVarargs
     private final void validateMigrations(Condition<Migration>... migrations) {
         List<Migration> records = new ArrayList<>();
@@ -194,8 +189,8 @@ public class MongoTrekIntegrationTest {
                                         d.getString("version"),
                                         d.getString("description"),
                                         d.getString("author"),
-                                        Optional.ofNullable(d.getDate("started")).map(DateTime::new).orElse(null),
-                                        Optional.ofNullable(d.getDate("finished")).map(DateTime::new).orElse(null),
+                                        Optional.ofNullable(d.getDate("started")).map(Date::toInstant).orElse(null),
+                                        Optional.ofNullable(d.getDate("finished")).map(Date::toInstant).orElse(null),
                                         MigrationStatus.valueOf(d.getString("status")),
                                         d.getString("failureMessage"),
                                         d.get("result", Document.class)
@@ -221,8 +216,8 @@ public class MongoTrekIntegrationTest {
         document.put("version", version);
         document.put("description", description);
         document.put("author", Optional.ofNullable(author).orElse(Migration.DEFAULT_AUTHOR));
-        document.put("started", Optional.ofNullable(started).map(DateTime::parse).map(DateTime::toDate).orElse(null));
-        document.put("finished", Optional.ofNullable(finished).map(DateTime::parse).map(DateTime::toDate).orElse(null));
+        document.put("started", Optional.ofNullable(started).map(Instant::parse).orElse(null));
+        document.put("finished", Optional.ofNullable(finished).map(Instant::parse).orElse(null));
         document.put("status", status.name());
         document.put("failureMessage", failureMessage);
         document.put("result", result);

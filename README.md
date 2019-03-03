@@ -1,5 +1,6 @@
 ![mongo-trek](https://raw.githubusercontent.com/ozwolf-software/mongo-trek/master/misc/mongotrek-logo.png)
 
+[![Status](https://img.shields.io/badge/status-active-brightgreen.svg?style=flat-square)](https://img.shields.io/badge/status-active-brightgreen.svg)
 [![Travis](https://img.shields.io/travis/ozwolf-software/mongo-trek.svg?style=flat-square)](https://travis-ci.org/ozwolf-software/mongo-trek)
 [![Maven Central](https://img.shields.io/maven-central/v/net.ozwolf/mongo-trek.svg?style=flat-square)](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22net.ozwolf%22%20AND%20a%3A%22mongo-trek%22)
 [![Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=flat-square)](LICENSE)

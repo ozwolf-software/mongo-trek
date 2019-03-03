@@ -4,13 +4,18 @@ import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import com.mongodb.client.MongoDatabase;
+import de.flapdoodle.embed.mongo.Command;
 import de.flapdoodle.embed.mongo.MongodExecutable;
 import de.flapdoodle.embed.mongo.MongodProcess;
 import de.flapdoodle.embed.mongo.MongodStarter;
 import de.flapdoodle.embed.mongo.config.IMongodConfig;
 import de.flapdoodle.embed.mongo.config.MongodConfigBuilder;
 import de.flapdoodle.embed.mongo.config.Net;
+import de.flapdoodle.embed.mongo.config.RuntimeConfigBuilder;
 import de.flapdoodle.embed.mongo.distribution.Version;
+import de.flapdoodle.embed.process.config.IRuntimeConfig;
+import de.flapdoodle.embed.process.config.io.ProcessOutput;
+import de.flapdoodle.embed.process.io.Processors;
 import de.flapdoodle.embed.process.runtime.AbstractProcess;
 import de.flapdoodle.embed.process.runtime.Executable;
 import de.flapdoodle.embed.process.runtime.Network;
@@ -36,7 +41,7 @@ public class MongoDBServerRule implements TestRule {
         this.port = getAvailablePort();
     }
 
-    public MongoDatabase getDatabase(){
+    public MongoDatabase getDatabase() {
         return client.getDatabase(SCHEMA_NAME);
     }
 
@@ -49,7 +54,12 @@ public class MongoDBServerRule implements TestRule {
         return new Statement() {
             @Override
             public void evaluate() throws Throwable {
-                MongodStarter starter = MongodStarter.getDefaultInstance();
+                IRuntimeConfig runtimeConfig = new RuntimeConfigBuilder()
+                        .defaults(Command.MongoD)
+                        .processOutput(new ProcessOutput(Processors.silent(), Processors.silent(), Processors.silent()))
+                        .build();
+
+                MongodStarter starter = MongodStarter.getInstance(runtimeConfig);
 
                 IMongodConfig config = new MongodConfigBuilder()
                         .version(Version.Main.V3_4)

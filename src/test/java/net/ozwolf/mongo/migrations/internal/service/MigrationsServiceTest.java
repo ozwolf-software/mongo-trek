@@ -3,13 +3,16 @@ package net.ozwolf.mongo.migrations.internal.service;
 import net.ozwolf.mongo.migrations.MongoTrekState;
 import net.ozwolf.mongo.migrations.exception.DuplicateVersionException;
 import net.ozwolf.mongo.migrations.internal.dao.SchemaVersionDAO;
-import net.ozwolf.mongo.migrations.internal.domain.*;
+import net.ozwolf.mongo.migrations.internal.domain.Migration;
+import net.ozwolf.mongo.migrations.internal.domain.MigrationCommand;
+import net.ozwolf.mongo.migrations.internal.domain.MigrationCommands;
+import net.ozwolf.mongo.migrations.internal.domain.MigrationStatus;
 import org.bson.Document;
-import org.joda.time.DateTime;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -100,8 +103,8 @@ public class MigrationsServiceTest {
                 version,
                 String.format("Migration %s", version),
                 Migration.DEFAULT_AUTHOR,
-                DateTime.now(),
-                (status == MigrationStatus.Successful) ? DateTime.now() : null,
+                Instant.now(),
+                (status == MigrationStatus.Successful) ? Instant.now() : null,
                 status,
                 (status == MigrationStatus.Failed) ? "Failure" : null,
                 (status == MigrationStatus.Failed) ? null : new Document("n", 1)
@@ -113,7 +116,7 @@ public class MigrationsServiceTest {
     }
 
     private static MigrationCommands commands(MigrationCommand... commands) {
-        return new MigrationCommands(Arrays.asList(commands));
+        return new MigrationCommands(null, Arrays.asList(commands));
     }
 
     private static class V1_0_0__FirstMigration extends MigrationCommand {

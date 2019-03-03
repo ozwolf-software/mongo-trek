@@ -5,12 +5,8 @@ import com.mongodb.client.model.ReplaceOptions;
 import net.ozwolf.mongo.migrations.internal.domain.Migration;
 import net.ozwolf.mongo.migrations.internal.domain.MigrationStatus;
 import org.bson.Document;
-import org.joda.time.DateTime;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
 
 import static com.mongodb.client.model.Filters.eq;
@@ -33,8 +29,8 @@ public class DefaultSchemaVersionDAO implements SchemaVersionDAO {
                                         d.getString("version"),
                                         d.getString("description"),
                                         d.getString("author"),
-                                        Optional.ofNullable(d.getDate("started")).map(DateTime::new).orElse(null),
-                                        Optional.ofNullable(d.getDate("finished")).map(DateTime::new).orElse(null),
+                                        Optional.ofNullable(d.getDate("started")).map(Date::toInstant).orElse(null),
+                                        Optional.ofNullable(d.getDate("finished")).map(Date::toInstant).orElse(null),
                                         MigrationStatus.valueOf(d.getString("status")),
                                         d.getString("failureMessage"),
                                         d.get("result", Document.class)
@@ -49,8 +45,8 @@ public class DefaultSchemaVersionDAO implements SchemaVersionDAO {
         Document d = new Document("version", migration.getVersion())
                 .append("description", migration.getDescription())
                 .append("author", migration.getAuthor())
-                .append("started", Optional.ofNullable(migration.getStarted()).map(DateTime::toDate).orElse(null))
-                .append("finished", Optional.ofNullable(migration.getFinished()).map(DateTime::toDate).orElse(null))
+                .append("started", Optional.ofNullable(migration.getStarted()).map(Date::from).orElse(null))
+                .append("finished", Optional.ofNullable(migration.getFinished()).map(Date::from).orElse(null))
                 .append("status", migration.getStatus().name())
                 .append("failureMessage", migration.getFailureMessage())
                 .append("result", migration.getResult());

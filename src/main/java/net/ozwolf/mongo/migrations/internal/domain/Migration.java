@@ -1,23 +1,21 @@
 package net.ozwolf.mongo.migrations.internal.domain;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.bson.Document;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
-
-import static org.joda.time.Seconds.secondsBetween;
 
 public class Migration {
     private final String version;
     private final String description;
     private final String author;
-    private DateTime started;
-    private DateTime finished;
+    private Instant started;
+    private Instant finished;
     private MigrationStatus status;
     private String failureMessage;
     private Map<String, Object> result;
@@ -29,8 +27,8 @@ public class Migration {
     public Migration(String version,
                      String description,
                      String author,
-                     DateTime started,
-                     DateTime finished,
+                     Instant started,
+                     Instant finished,
                      MigrationStatus status,
                      String failureMessage,
                      Map<String, Object> result) {
@@ -65,11 +63,11 @@ public class Migration {
         return author;
     }
 
-    public DateTime getStarted() {
+    public Instant getStarted() {
         return started;
     }
 
-    public DateTime getFinished() {
+    public Instant getFinished() {
         return finished;
     }
 
@@ -79,7 +77,7 @@ public class Migration {
 
     public String getDuration() {
         if (status != MigrationStatus.Successful) return "";
-        return String.format("%d seconds", secondsBetween(this.started, this.finished).getSeconds());
+        return String.format("%d seconds", Duration.between(this.started, this.finished).getSeconds());
     }
 
     public MigrationStatus getStatus() {
@@ -118,7 +116,7 @@ public class Migration {
     }
 
     public Migration running() {
-        this.started = DateTime.now();
+        this.started = Instant.now();
         this.finished = null;
         this.failureMessage = null;
         this.status = MigrationStatus.Running;
@@ -126,7 +124,7 @@ public class Migration {
     }
 
     public Migration successful(Document result) {
-        this.finished = DateTime.now();
+        this.finished = Instant.now();
         this.status = MigrationStatus.Successful;
         this.result = result;
         return this;
@@ -143,7 +141,7 @@ public class Migration {
         List<String> tags = new ArrayList<>();
         tags.add(String.format("[ %s ]", status.name()));
         if (this.status == MigrationStatus.Successful || this.status == MigrationStatus.Failed)
-            tags.add(String.format("[ %s ]", started.toDateTime(DateTimeZone.getDefault()).toString("yyyy-MM-dd HH:mm:ss")));
+            tags.add(String.format("[ %s ]", started.atZone(ZoneOffset.systemDefault()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
 
         if (this.status == MigrationStatus.Successful)
             tags.add(String.format("[ %s ]", getDuration()));

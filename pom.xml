@@ -6,7 +6,7 @@
 
     <groupId>net.ozwolf</groupId>
     <artifactId>mongo-trek</artifactId>
-    <version>3.2.0</version>
+    <version>4.0.0</version>
     <name>mongoTrek</name>
     <description>Java library for managing MongoDB schema migrations.</description>
     <url>https://github.com/ozwolf-software/mongo-trek</url>
@@ -21,22 +21,34 @@
     <properties>
         <compile.version>1.8</compile.version>
         <compile.encoding>UTF-8</compile.encoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <!-- Runtime Libraries -->
-        <joda.time.version>2.9.9</joda.time.version>
-        <commons.lang.version>3.7</commons.lang.version>
+        <commons.lang.version>3.8.1</commons.lang.version>
         <commons.io.version>2.6</commons.io.version>
-        <maven.artifact.version>3.5.3</maven.artifact.version>
-        <jackson.version>2.9.5</jackson.version>
+        <maven.artifact.version>3.6.0</maven.artifact.version>
+        <jackson.version>2.9.8</jackson.version>
         <mongo.version>3.8.0</mongo.version>
-        <slf4j.version>1.7.25</slf4j.version>
+        <slf4j.version>1.7.26</slf4j.version>
 
         <!-- Testing Libraries -->
         <junit.version>4.12</junit.version>
-        <assertj.version>3.9.1</assertj.version>
-        <mockito.version>2.18.0</mockito.version>
-        <embedded.mongo.version>2.0.3</embedded.mongo.version>
+        <assertj.version>3.12.1</assertj.version>
+        <mockito.version>2.24.5</mockito.version>
+        <embedded.mongo.version>2.2.0</embedded.mongo.version>
         <logback.version>1.2.3</logback.version>
+
+        <!-- Plugins -->
+        <compiler.plugin.version>3.8.0</compiler.plugin.version>
+        <surefire.plugin.version>2.22.1</surefire.plugin.version>
+        <failsafe.plugin.version>2.22.1</failsafe.plugin.version>
+        <javadoc.plugin.version>3.0.1</javadoc.plugin.version>
+        <jacoco.plugin.version>0.8.3</jacoco.plugin.version>
+        <gpg.plugin.version>1.6</gpg.plugin.version>
+        <nexus.staging.plugin.version>1.6.8</nexus.staging.plugin.version>
+
+        <code.coverage>0.80</code.coverage>
     </properties>
 
     <developers>
@@ -94,11 +106,6 @@
             <version>${commons.io.version}</version>
         </dependency>
         <dependency>
-            <groupId>joda-time</groupId>
-            <artifactId>joda-time</artifactId>
-            <version>${joda.time.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-artifact</artifactId>
             <version>${maven.artifact.version}</version>
@@ -118,8 +125,6 @@
             <artifactId>jackson-dataformat-yaml</artifactId>
             <version>${jackson.version}</version>
         </dependency>
-
-        <!-- Provided Libraries -->
 
         <!-- Testing Libraries -->
         <dependency>
@@ -166,7 +171,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.5.1</version>
+                <version>${compiler.plugin.version}</version>
                 <configuration>
                     <source>${compile.version}</source>
                     <target>${compile.version}</target>
@@ -175,8 +180,26 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${surefire.plugin.version}</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>${failsafe.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.9</version>
+                <version>${javadoc.plugin.version}</version>
                 <configuration>
                     <doclet>ch.raffael.doclets.pegdown.PegdownDoclet</doclet>
                     <docletArtifact>
@@ -203,36 +226,63 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.7.8</version>
+                <version>${jacoco.plugin.version}</version>
                 <executions>
                     <execution>
-                        <id>default-prepare-agent</id>
+                        <!-- Define location for Surefire unit test coverage data -->
+                        <id>pre-unit-test</id>
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
+                        <configuration>
+                            <destFile>${project.build.directory}/jacoco/ut.exec</destFile>
+                        </configuration>
                     </execution>
                     <execution>
-                        <id>default-report</id>
-                        <phase>prepare-package</phase>
+                        <!-- Define location for Failsafe unit test coverage data -->
+                        <id>pre-integration-test</id>
+                        <phase>pre-integration-test</phase>
                         <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                        <configuration>
+                            <destFile>${project.build.directory}/jacoco/it.exec</destFile>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <!-- Merge before reporting -->
+                        <id>post-integration-test</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>merge</goal>
                             <goal>report</goal>
                         </goals>
+                        <configuration>
+                            <fileSets>
+                                <fileSet>
+                                    <directory>${project.build.directory}/jacoco</directory>
+                                    <includes>
+                                        <include>*.exec</include>
+                                    </includes>
+                                </fileSet>
+                            </fileSets>
+                            <outputDirectory>${project.build.directory}/coverage-reports</outputDirectory>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>default-check</id>
                         <goals>
                             <goal>check</goal>
+                            <goal>report</goal>
                         </goals>
                         <configuration>
                             <rules>
-                                <!--  implmentation is needed only for Maven 2  -->
-                                <rule implementation="org.jacoco.maven.RuleConfiguration">
+                                <rule>
                                     <limits>
-                                        <!--  implmentation is needed only for Maven 2  -->
-                                        <limit implementation="org.jacoco.report.check.Limit">
+                                        <limit>
                                             <counter>INSTRUCTION</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.80</minimum>
+                                            <minimum>${code.coverage}</minimum>
                                         </limit>
                                     </limits>
                                 </rule>
@@ -252,7 +302,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.6</version>
+                        <version>${gpg.plugin.version}</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
@@ -266,7 +316,7 @@
                     <plugin>
                         <groupId>org.sonatype.plugins</groupId>
                         <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <version>1.6.7</version>
+                        <version>${nexus.staging.plugin.version}</version>
                         <extensions>true</extensions>
                         <configuration>
                             <serverId>ossrh</serverId>
