@@ -11,8 +11,8 @@ migrations:
     command: {
       insert: "first_migrations",
       documents: [
-        { name: "Homer Simpson", age: 37, updatedAt: { $date: "2018-12-18T11:29:33.123+11:00" } },
-        { name: "Marge Simpson", age: 36, updatedAt: { $date: "2018-12-18T11:29:33.123+11:00" } }
+        { name: "Homer Simpson", age: 37, updatedAt: { $date: "2018-12-18T11:29:33.123+11:00" }, scores: [ 1, 3, 5] },
+        { name: "Marge Simpson", age: 36, updatedAt: { $date: "2018-12-18T11:29:33.123+11:00" }, scored: [ 2, 4, 6] }
       ]
     }
   - version: 2.0.0

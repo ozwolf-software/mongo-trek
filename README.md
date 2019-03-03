@@ -66,6 +66,8 @@ Refer to the [MongoDB Database Commands](https://docs.mongodb.com/manual/referen
 
 The migrations file for mongoTrek is a YAML or JSON file that is either a resource in your classpath or a file on your file system.  The library will first scan the classpath before the file system.
 
+The file can define the `schemaVersionCollection` here.  If the schema version collection is _also_ defined via the `MongoTrek.setSchemaVersionCollection(<string>)` command, the value in the file will be ignored.
+
 Each migration entry consists of:
  
 + `version` [ `REQUIRED` ] - A unique version identifier.  Migrations will be played in schemantic version order, regardless of their order in the migrations file (eg. version `2.0.0` will always be played ahead of `2.0.0.1`)
@@ -76,6 +78,7 @@ Each migration entry consists of:
 #### Example Migrations File
 
 ```yaml
+schemaVersionCollection: my_schema_version
 migrations:
     - version: 1.0.0
       description: populate people base data

@@ -25,24 +25,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * The mongoTrek main class allows an application to provide it's own `MongoDatabase` instance or MongoDB Connection string to then apply migrations to or report on the migration status of their database schema.
  *
- * ##Example Usage
- *
- * ```java
- * public class MyApplication {
- *      public void start(){
- *          try {
- *              MongoTrek trek = new MongoTrek("mongodb://root:password@localhost:27017/my_application");
- *
- *              trek.setSchemaVersionCollection("_schema_version_my_application");
- *              MongoTrekState state = trek.migrate("mongodb/trek.yml");
- *
- *              LOGGER.info("Completed migrations to version " + state.getCurrentVersion());
- *          } catch (MongoMigrationFailureException e) {
- *              LOGGER.error("Error migrating database, e);
- *          }
- *      }
- * }
- * ```
  */
 @SuppressWarnings({"OptionalGetWithoutIsPresent", "WeakerAccess", "unused"})
 public class MongoTrek {
@@ -64,7 +46,7 @@ public class MongoTrek {
      * Create a new MongoTrek instance that will connect to the provided connection string.
      *
      * @param migrationsFile The YAML or JSON file containing your MongoDB migrations.
-     * @param uri The Mongo instance connection string
+     * @param uri            The Mongo instance connection string
      * @see [MongoDB Connection String](https://docs.mongodb.com/manual/reference/connection-string/)
      */
     public MongoTrek(String migrationsFile, String uri) {
@@ -80,9 +62,9 @@ public class MongoTrek {
      * Create a new MongoTrek instance using a provided `MongoDatabase` instance.  MongoTrek will not close this connection.
      *
      * @param migrationsFile The YAML or JSON file containing your MongoDB migrations.
-     * @param database The `MongoDatabase` instance.
+     * @param database       The `MongoDatabase` instance.
      */
-    public MongoTrek(String migrationsFile, MongoDatabase database){
+    public MongoTrek(String migrationsFile, MongoDatabase database) {
         this.migrationsFile = migrationsFile;
         this.mongo = null;
         this.database = database;
@@ -108,6 +90,11 @@ public class MongoTrek {
     public MongoTrekState migrate() throws MongoTrekFailureException {
         LOGGER.info("DATABASE MIGRATIONS");
         MigrationCommands commands = commandsFactory().getCommands(migrationsFile);
+        commands.getSchemaVersionCollection().ifPresent(n -> {
+            if (schemaVersionCollection.equalsIgnoreCase(DEFAULT_SCHEMA_VERSION_COLLECTION))
+                schemaVersionCollection = n;
+        });
+
         MongoTrekState state = migrationsService().getState(commands);
 
         if (!commands.hasMigrations()) {
@@ -228,7 +215,7 @@ public class MongoTrek {
         return schemaVersionDAO;
     }
 
-    private MigrationCommandsFactory commandsFactory(){
+    private MigrationCommandsFactory commandsFactory() {
         if (commandsFactory == null)
             commandsFactory = new MigrationCommandsFactory();
 
