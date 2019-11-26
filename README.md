@@ -23,14 +23,14 @@ mongoTrek is a fork from the [Java Mongo Migrations](https://github.com/ozwolf-s
 <dependency>
     <groupId>net.ozwolf</groupId>
     <artifactId>mongo-trek</artifactId>
-    <version>4.0.0</version>
+    <version>4.0.1</version>
 </dependency>
 ```
 
 ### Gradle
 
 ```gradle
-compile 'net.ozwolf:mongo-trek:4.0.0'
+compile 'net.ozwolf:mongo-trek:4.0.1'
 ```
 
 ### Provided Dependencies
