@@ -6,7 +6,7 @@
 
     <groupId>net.ozwolf</groupId>
     <artifactId>mongo-trek</artifactId>
-    <version>4.0.0</version>
+    <version>4.0.1</version>
     <name>mongoTrek</name>
     <description>Java library for managing MongoDB schema migrations.</description>
     <url>https://github.com/ozwolf-software/mongo-trek</url>
