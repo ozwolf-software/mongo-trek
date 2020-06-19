@@ -8,9 +8,9 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import net.ozwolf.mongo.migrations.exception.MongoTrekFailureException;
+import net.ozwolf.mongo.migrations.extension.MongoDBServerExtension;
 import net.ozwolf.mongo.migrations.internal.domain.Migration;
 import net.ozwolf.mongo.migrations.internal.domain.MigrationStatus;
-import net.ozwolf.mongo.migrations.extension.MongoDBServerExtension;
 import net.ozwolf.mongo.migrations.testutils.DateTimeUtils;
 import org.assertj.core.api.Condition;
 import org.bson.Document;
@@ -80,18 +80,23 @@ class MongoTrekIntegrationITCase {
     }
 
     @Test
-    void shouldHandleZeroCommandsProvided() throws MongoTrekFailureException {
-        MongoTrek migrations = new MongoTrek("fixtures/zero-migrations.yml", this.database);
-        migrations.setSchemaVersionCollection(SCHEMA_VERSION_COLLECTION);
-        migrations.migrate();
+    void shouldHandleZeroCommandsProvidedAndUseAlternativeClassLoader() throws MongoTrekFailureException {
+        MongoTrek.setClassLoader(MongoTrekIntegrationITCase.class.getClassLoader());
+        try {
+            MongoTrek migrations = new MongoTrek("fixtures/zero-migrations.yml", this.database);
+            migrations.setSchemaVersionCollection(SCHEMA_VERSION_COLLECTION);
+            migrations.migrate();
 
-        verify(appender, atLeastOnce()).doAppend(captor.capture());
+            verify(appender, atLeastOnce()).doAppend(captor.capture());
 
-        List<ILoggingEvent> events = captor.getAllValues();
+            List<ILoggingEvent> events = captor.getAllValues();
 
-        assertThat(events)
-                .areAtLeastOne(loggedMessage("DATABASE MIGRATIONS"))
-                .areAtLeastOne(loggedMessage("   No migrations to apply."));
+            assertThat(events)
+                    .areAtLeastOne(loggedMessage("DATABASE MIGRATIONS"))
+                    .areAtLeastOne(loggedMessage("   No migrations to apply."));
+        } finally {
+            MongoTrek.setClassLoader(MongoTrek.class.getClassLoader());
+        }
     }
 
     @Test
