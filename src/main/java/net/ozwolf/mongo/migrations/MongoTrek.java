@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * <h1>Mongo Trek</h1>
@@ -40,6 +41,8 @@ public class MongoTrek {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(MongoTrek.class);
     private final static String DEFAULT_SCHEMA_VERSION_COLLECTION = "_schema_version";
+
+    private final static AtomicReference<ClassLoader> CLASS_LOADER = new AtomicReference<>(MongoTrek.class.getClassLoader());
 
     /**
      * Create a new MongoTrek instance that will connect to the provided connection string.
@@ -91,7 +94,7 @@ public class MongoTrek {
      */
     public MongoTrekState migrate() throws MongoTrekFailureException {
         LOGGER.info("DATABASE MIGRATIONS");
-        MigrationCommands commands = commandsFactory().getCommands(migrationsFile);
+        MigrationCommands commands = commandsFactory().getCommands(migrationsFile, CLASS_LOADER.get());
         commands.getSchemaVersionCollection().ifPresent(n -> {
             if (schemaVersionCollection.equalsIgnoreCase(DEFAULT_SCHEMA_VERSION_COLLECTION))
                 schemaVersionCollection = n;
@@ -153,10 +156,11 @@ public class MongoTrek {
      * @throws MongoTrekFailureException If the status report fails for whatever reason.
      */
     public MongoTrekState status(boolean logStatus) throws MongoTrekFailureException {
-        if (logStatus)
-            LOGGER.info("DATABASE MIGRATIONS");
-        MigrationCommands commands = commandsFactory().getCommands(migrationsFile);
+        if (logStatus) LOGGER.info("DATABASE MIGRATIONS");
+
+        MigrationCommands commands = commandsFactory().getCommands(migrationsFile, CLASS_LOADER.get());
         MongoTrekState state = migrationsService().getState(commands);
+
         try {
             if (logStatus) {
                 logStatus("status", state.getCurrentVersion());
@@ -172,6 +176,17 @@ public class MongoTrek {
         } finally {
             if (!this.providedDatabase) this.mongo.close();
         }
+    }
+
+    /**
+     * Set the class loader for mongoTrek to use when loading migrations files from resource paths.
+     *
+     * By default, mongoTrek uses the class loader from `MongoTrek.class.getClassLoader()`, but sometimes this class loader is not relevant.
+     *
+     * @param classLoader the class loader for mongoTrek to use when loading resources
+     */
+    public static void setClassLoader(ClassLoader classLoader) {
+        CLASS_LOADER.set(classLoader);
     }
 
     private void logStatus(String action, String currentVersion) {

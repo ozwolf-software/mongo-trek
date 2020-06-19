@@ -8,9 +8,7 @@ import net.ozwolf.mongo.migrations.internal.domain.MigrationCommand;
 import net.ozwolf.mongo.migrations.internal.domain.MigrationCommands;
 import net.ozwolf.mongo.migrations.internal.domain.MigrationStatus;
 import org.bson.Document;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.util.Arrays;
@@ -19,14 +17,12 @@ import java.util.List;
 
 import static net.ozwolf.mongo.migrations.matchers.MigrationMatchers.migrationOf;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class MigrationsServiceTest {
     private final SchemaVersionDAO schemaVersionDAO = mock(SchemaVersionDAO.class);
-
-    @Rule
-    public ExpectedException exception = ExpectedException.none();
 
     @Test
     public void shouldReturnPendingStateFromMigrationState() {
@@ -57,6 +53,7 @@ public class MigrationsServiceTest {
     }
 
     @Test
+
     public void shouldReturnAllMigrations() {
         Migration previous1 = record("1.0.0", MigrationStatus.Successful);
         Migration previous2 = record("1.0.1", MigrationStatus.Successful);
@@ -93,9 +90,11 @@ public class MigrationsServiceTest {
                 new V2_0_0__DuplicateMigration()
         );
 
-        exception.expect(DuplicateVersionException.class);
-        exception.expectMessage("Migration [ 2.0.0 ] has duplicate commands.");
-        new MigrationsService(schemaVersionDAO).getState(commands);
+        assertThrows(
+                DuplicateVersionException.class,
+                () -> new MigrationsService(schemaVersionDAO).getState(commands),
+                "Migration [ 2.0.0 ] has duplicate commands."
+        );
     }
 
     private Migration record(String version, MigrationStatus status) {

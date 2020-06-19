@@ -10,14 +10,13 @@ import com.mongodb.client.model.Filters;
 import net.ozwolf.mongo.migrations.exception.MongoTrekFailureException;
 import net.ozwolf.mongo.migrations.internal.domain.Migration;
 import net.ozwolf.mongo.migrations.internal.domain.MigrationStatus;
-import net.ozwolf.mongo.migrations.rule.MongoDBServerRule;
+import net.ozwolf.mongo.migrations.extension.MongoDBServerExtension;
 import net.ozwolf.mongo.migrations.testutils.DateTimeUtils;
 import org.assertj.core.api.Condition;
 import org.bson.Document;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
 
@@ -32,13 +31,12 @@ import static com.mongodb.client.model.Filters.and;
 import static net.ozwolf.mongo.migrations.matchers.LoggingMatchers.loggedMessage;
 import static net.ozwolf.mongo.migrations.matchers.MigrationMatchers.migrationOf;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.*;
 
-public class MongoTrekIntegrationITCase {
-    @ClassRule
-    @Rule
-    public final static MongoDBServerRule DATABASE = new MongoDBServerRule();
+class MongoTrekIntegrationITCase {
+    @RegisterExtension
+    final static MongoDBServerExtension DATABASE = new MongoDBServerExtension();
 
     private MongoDatabase database;
 
@@ -49,8 +47,8 @@ public class MongoTrekIntegrationITCase {
     private final Appender<ILoggingEvent> appender = mock(Appender.class);
     private final ArgumentCaptor<ILoggingEvent> captor = ArgumentCaptor.forClass(ILoggingEvent.class);
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         this.database = DATABASE.getDatabase();
 
         this.database.getCollection(SCHEMA_VERSION_COLLECTION).drop();
@@ -67,7 +65,7 @@ public class MongoTrekIntegrationITCase {
     }
 
     @Test
-    public void shouldHandleZeroPendingMigrations() throws MongoTrekFailureException {
+    void shouldHandleZeroPendingMigrations() throws MongoTrekFailureException {
         MongoTrek migrations = new MongoTrek("fixtures/zero-pending-migrations.yml", this.database);
         migrations.setSchemaVersionCollection(SCHEMA_VERSION_COLLECTION);
         migrations.migrate();
@@ -82,7 +80,7 @@ public class MongoTrekIntegrationITCase {
     }
 
     @Test
-    public void shouldHandleZeroCommandsProvided() throws MongoTrekFailureException {
+    void shouldHandleZeroCommandsProvided() throws MongoTrekFailureException {
         MongoTrek migrations = new MongoTrek("fixtures/zero-migrations.yml", this.database);
         migrations.setSchemaVersionCollection(SCHEMA_VERSION_COLLECTION);
         migrations.migrate();
@@ -97,7 +95,7 @@ public class MongoTrekIntegrationITCase {
     }
 
     @Test
-    public void shouldFailMigrationsOnLastMigration() {
+    void shouldFailMigrationsOnLastMigration() {
         try {
             MongoTrek migrations = new MongoTrek("fixtures/last-failure-migrations.yml", this.database);
             migrations.setSchemaVersionCollection(SCHEMA_VERSION_COLLECTION);
@@ -133,7 +131,7 @@ public class MongoTrekIntegrationITCase {
             List<ILoggingEvent> events = captor.getAllValues();
             assertThat(events)
                     .areAtLeastOne(loggedMessage("DATABASE MIGRATIONS"))
-                    .areAtLeastOne(loggedMessage("       Database : [ " + MongoDBServerRule.SCHEMA_NAME + " ]"))
+                    .areAtLeastOne(loggedMessage("       Database : [ " + MongoDBServerExtension.SCHEMA_NAME + " ]"))
                     .areAtLeastOne(loggedMessage(" Schema Version : [ _schema_version ]"))
                     .areAtLeastOne(loggedMessage("         Action : [ migrate ]"))
                     .areAtLeastOne(loggedMessage("Current Version : [ 1.0.1 ]"))
@@ -149,7 +147,7 @@ public class MongoTrekIntegrationITCase {
     }
 
     @Test
-    public void shouldReportOnMigrations() throws MongoTrekFailureException {
+    void shouldReportOnMigrations() throws MongoTrekFailureException {
         MongoTrek migrations = new MongoTrek("fixtures/last-failure-migrations.yml", this.database);
         migrations.setSchemaVersionCollection(SCHEMA_VERSION_COLLECTION);
         migrations.status(true);
@@ -157,7 +155,7 @@ public class MongoTrekIntegrationITCase {
         verify(appender, atLeastOnce()).doAppend(captor.capture());
         List<ILoggingEvent> events = captor.getAllValues();
         assertThat(events).areAtLeastOne(loggedMessage("DATABASE MIGRATIONS"))
-                .areAtLeastOne(loggedMessage("       Database : [ " + MongoDBServerRule.SCHEMA_NAME + " ]"))
+                .areAtLeastOne(loggedMessage("       Database : [ " + MongoDBServerExtension.SCHEMA_NAME + " ]"))
                 .areAtLeastOne(loggedMessage(" Schema Version : [ _schema_version ]"))
                 .areAtLeastOne(loggedMessage("         Action : [ status ]"))
                 .areAtLeastOne(loggedMessage("Current Version : [ 1.0.1 ]"))

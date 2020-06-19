@@ -1,12 +1,13 @@
 package net.ozwolf.mongo.migrations.internal.factory;
 
 import com.mongodb.DBObject;
+import net.ozwolf.mongo.migrations.MongoTrek;
 import net.ozwolf.mongo.migrations.exception.MongoTrekFailureException;
 import net.ozwolf.mongo.migrations.internal.domain.Migration;
 import net.ozwolf.mongo.migrations.internal.domain.MigrationCommand;
 import net.ozwolf.mongo.migrations.internal.domain.MigrationCommands;
 import org.assertj.core.api.Condition;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
@@ -15,10 +16,10 @@ import java.util.function.Predicate;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SuppressWarnings({"OptionalGetWithoutIsPresent", "unchecked"})
-public class MigrationCommandsFactoryTest {
+class MigrationCommandsFactoryTest {
     @Test
-    public void shouldDeserializeMigrationsFileCorrectly() throws MongoTrekFailureException {
-        MigrationCommands commands = new MigrationCommandsFactory().getCommands("fixtures/migrations-deserialization-test.yml");
+    void shouldDeserializeMigrationsFileCorrectly() throws MongoTrekFailureException {
+        MigrationCommands commands = new MigrationCommandsFactory().getCommands("fixtures/migrations-deserialization-test.yml", MongoTrek.class.getClassLoader());
 
         assertThat(commands.hasMigrations()).isTrue();
         assertThat(commands.getMigrations()).hasSize(2);

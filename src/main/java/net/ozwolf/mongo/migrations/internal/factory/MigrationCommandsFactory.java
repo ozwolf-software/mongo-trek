@@ -16,17 +16,17 @@ import java.util.Optional;
 public class MigrationCommandsFactory {
     private final static ObjectMapper MAPPER = new YAMLMapper();
 
-    public MigrationCommands getCommands(String migrationsFile) throws MongoTrekFailureException {
+    public MigrationCommands getCommands(String migrationsFile, ClassLoader classLoader) throws MongoTrekFailureException {
         try {
-            String source = load(migrationsFile).orElseThrow(() -> new MongoTrekFailureException(new IllegalArgumentException(String.format("Could not find migrations file [ %s ] on classpath or file system.", migrationsFile))));
+            String source = load(migrationsFile, classLoader).orElseThrow(() -> new MongoTrekFailureException(new IllegalArgumentException(String.format("Could not find migrations file [ %s ] on classpath or file system.", migrationsFile))));
             return MAPPER.readValue(source, MigrationCommands.class);
         } catch (IOException e) {
             throw new MongoTrekFailureException(e);
         }
     }
 
-    private static Optional<String> load(String migrationsFile) throws MongoTrekFailureException {
-        URL url = MigrationCommandsFactory.class.getClassLoader().getResource(migrationsFile);
+    private static Optional<String> load(String migrationsFile, ClassLoader classLoader) throws MongoTrekFailureException {
+        URL url = classLoader.getResource(migrationsFile);
         File file = new File(migrationsFile);
         try {
             if (url != null) {

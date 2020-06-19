@@ -1,14 +1,13 @@
 package net.ozwolf.mongo.migrations.internal.dao;
 
 import com.mongodb.client.MongoCollection;
+import net.ozwolf.mongo.migrations.extension.MongoDBServerExtension;
 import net.ozwolf.mongo.migrations.internal.domain.Migration;
 import net.ozwolf.mongo.migrations.internal.domain.MigrationStatus;
-import net.ozwolf.mongo.migrations.rule.MongoDBServerRule;
 import org.bson.Document;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.time.Instant;
 import java.util.List;
@@ -20,16 +19,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class DefaultSchemaVersionDAOITCase {
 
-    @ClassRule
-    @Rule
-    public final static MongoDBServerRule DATABASE = new MongoDBServerRule();
+    @RegisterExtension
+    final static MongoDBServerExtension DATABASE = new MongoDBServerExtension();
 
     private MongoCollection<Document> collection;
 
     private final static String SCHEMA_VERSION_COLLECTION = "_schema_version";
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         this.collection = DATABASE.getDatabase().getCollection(SCHEMA_VERSION_COLLECTION);
 
         this.collection.drop();
@@ -39,7 +37,7 @@ public class DefaultSchemaVersionDAOITCase {
     }
 
     @Test
-    public void shouldReturnAllMigrations() {
+    void shouldReturnAllMigrations() {
         SchemaVersionDAO dao = new DefaultSchemaVersionDAO(this.collection);
 
         List<Migration> result = dao.findAll();
@@ -51,7 +49,7 @@ public class DefaultSchemaVersionDAOITCase {
     }
 
     @Test
-    public void shouldReturnLatestSuccessfulMigration() {
+    void shouldReturnLatestSuccessfulMigration() {
         SchemaVersionDAO dao = new DefaultSchemaVersionDAO(this.collection);
 
         Migration latest = dao.findLastSuccessful().orElseThrow(() -> new AssertionError("Failed to find successful migration."));
@@ -62,7 +60,7 @@ public class DefaultSchemaVersionDAOITCase {
     }
 
     @Test
-    public void shouldInsertVersionToDatabase() {
+    void shouldInsertVersionToDatabase() {
         Migration migration = new Migration(
                 "1.0.2",
                 "Failed migration",
@@ -88,7 +86,7 @@ public class DefaultSchemaVersionDAOITCase {
     }
 
     @Test
-    public void shouldUpdateVersionInDatabase() {
+    void shouldUpdateVersionInDatabase() {
         Document beforeQuery = new Document("version", "1.0.1")
                 .append("status", MigrationStatus.Failed.name())
                 .append("failureMessage", "failure");

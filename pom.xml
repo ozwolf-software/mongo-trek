@@ -6,7 +6,7 @@
 
     <groupId>net.ozwolf</groupId>
     <artifactId>mongo-trek</artifactId>
-    <version>4.0.2</version>
+    <version>4.1.0</version>
     <name>mongoTrek</name>
     <description>Java library for managing MongoDB schema migrations.</description>
     <url>https://github.com/ozwolf-software/mongo-trek</url>
@@ -25,26 +25,26 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <!-- Runtime Libraries -->
-        <commons.lang.version>3.8.1</commons.lang.version>
-        <commons.io.version>2.6</commons.io.version>
-        <maven.artifact.version>3.6.0</maven.artifact.version>
-        <jackson.version>2.10.1</jackson.version>
-        <mongo.version>3.8.0</mongo.version>
-        <slf4j.version>1.7.26</slf4j.version>
+        <commons.lang.version>3.10</commons.lang.version>
+        <commons.io.version>2.7</commons.io.version>
+        <maven.artifact.version>3.6.3</maven.artifact.version>
+        <jackson.version>2.11.0</jackson.version>
+        <mongo.version>3.12.5</mongo.version>
+        <slf4j.version>1.7.30</slf4j.version>
 
         <!-- Testing Libraries -->
-        <junit.version>4.12</junit.version>
-        <assertj.version>3.12.1</assertj.version>
-        <mockito.version>2.24.5</mockito.version>
+        <junit.version>5.6.2</junit.version>
+        <assertj.version>3.16.1</assertj.version>
+        <mockito.version>3.3.3</mockito.version>
         <embedded.mongo.version>2.2.0</embedded.mongo.version>
         <logback.version>1.2.3</logback.version>
 
         <!-- Plugins -->
-        <compiler.plugin.version>3.8.0</compiler.plugin.version>
-        <surefire.plugin.version>2.22.1</surefire.plugin.version>
-        <failsafe.plugin.version>2.22.1</failsafe.plugin.version>
-        <javadoc.plugin.version>3.0.1</javadoc.plugin.version>
-        <jacoco.plugin.version>0.8.3</jacoco.plugin.version>
+        <compiler.plugin.version>3.8.1</compiler.plugin.version>
+        <surefire.plugin.version>2.22.2</surefire.plugin.version>
+        <failsafe.plugin.version>2.22.2</failsafe.plugin.version>
+        <javadoc.plugin.version>3.2.0</javadoc.plugin.version>
+        <jacoco.plugin.version>0.8.5</jacoco.plugin.version>
         <gpg.plugin.version>1.6</gpg.plugin.version>
         <nexus.staging.plugin.version>1.6.8</nexus.staging.plugin.version>
 
@@ -128,8 +128,8 @@
 
         <!-- Testing Libraries -->
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
