@@ -1,7 +1,8 @@
 package net.ozwolf.mongo.migrations.extension;
 
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientURI;
+import com.mongodb.ConnectionString;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 import de.flapdoodle.embed.mongo.Command;
 import de.flapdoodle.embed.mongo.MongodExecutable;
@@ -56,8 +57,8 @@ public class MongoDBServerExtension implements BeforeAllCallback, AfterAllCallba
         executable = starter.prepare(config);
         process = executable.start();
 
-        MongoClientURI uri = new MongoClientURI("mongodb://localhost:" + port + "/" + SCHEMA_NAME);
-        client = new MongoClient(uri);
+        ConnectionString uri = new ConnectionString("mongodb://localhost:" + port + "/" + SCHEMA_NAME);
+        client = MongoClients.create(uri);
     }
 
     @Override

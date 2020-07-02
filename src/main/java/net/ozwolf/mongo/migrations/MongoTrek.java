@@ -1,9 +1,8 @@
 package net.ozwolf.mongo.migrations;
 
-import com.mongodb.DB;
-import com.mongodb.Mongo;
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientURI;
+import com.mongodb.ConnectionString;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 import net.ozwolf.mongo.migrations.exception.MongoTrekFailureException;
 import net.ozwolf.mongo.migrations.internal.dao.DefaultSchemaVersionDAO;
@@ -53,11 +52,11 @@ public class MongoTrek {
      */
     public MongoTrek(String migrationsFile, String uri) {
         this.migrationsFile = migrationsFile;
-        MongoClientURI clientURI = new MongoClientURI(uri);
+        ConnectionString clientURI = new ConnectionString(uri);
         if (clientURI.getDatabase() == null)
             throw new IllegalArgumentException("URI [ " + uri + " ] must contain a database schema to connect to.");
 
-        this.mongo = new MongoClient(clientURI);
+        this.mongo = MongoClients.create(clientURI);
         this.database = this.mongo.getDatabase(clientURI.getDatabase());
         this.providedDatabase = false;
         this.schemaVersionCollection = DEFAULT_SCHEMA_VERSION_COLLECTION;
@@ -212,12 +211,6 @@ public class MongoTrek {
     private void reportMigration(Migration migration) {
         LOGGER.info(String.format("       %s : %s", migration.getVersion(), migration.getDescription()));
         LOGGER.info(String.format("          Tags: %s", migration.getTags()));
-    }
-
-    @SuppressWarnings("deprecation")
-    private DB connectTo(final MongoClientURI uri) {
-        Mongo mongo = new MongoClient(uri);
-        return mongo.getDB(uri.getDatabase());
     }
 
     private MigrationsService migrationsService() {

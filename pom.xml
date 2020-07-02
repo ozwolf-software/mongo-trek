@@ -6,7 +6,7 @@
 
     <groupId>net.ozwolf</groupId>
     <artifactId>mongo-trek</artifactId>
-    <version>4.1.0</version>
+    <version>5.0.0</version>
     <name>mongoTrek</name>
     <description>Java library for managing MongoDB schema migrations.</description>
     <url>https://github.com/ozwolf-software/mongo-trek</url>
@@ -29,7 +29,7 @@
         <commons.io.version>2.7</commons.io.version>
         <maven.artifact.version>3.6.3</maven.artifact.version>
         <jackson.version>2.11.0</jackson.version>
-        <mongo.version>3.12.5</mongo.version>
+        <mongo.version>4.0.4</mongo.version>
         <slf4j.version>1.7.30</slf4j.version>
 
         <!-- Testing Libraries -->
@@ -86,7 +86,7 @@
         <!-- Runtime Libraries -->
         <dependency>
             <groupId>org.mongodb</groupId>
-            <artifactId>mongo-java-driver</artifactId>
+            <artifactId>mongodb-driver-sync</artifactId>
             <version>${mongo.version}</version>
             <scope>provided</scope>
         </dependency>
@@ -296,7 +296,7 @@
 
     <profiles>
         <profile>
-            <id>ossrh</id>
+            <id>sign</id>
             <build>
                 <plugins>
                     <plugin>
@@ -310,19 +310,14 @@
                                 <goals>
                                     <goal>sign</goal>
                                 </goals>
+                                <configuration>
+                                    <gpgArguments>
+                                        <arg>--pinentry-mode</arg>
+                                        <arg>loopback</arg>
+                                    </gpgArguments>
+                                </configuration>
                             </execution>
                         </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.sonatype.plugins</groupId>
-                        <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <version>${nexus.staging.plugin.version}</version>
-                        <extensions>true</extensions>
-                        <configuration>
-                            <serverId>ossrh</serverId>
-                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                        </configuration>
                     </plugin>
                 </plugins>
             </build>

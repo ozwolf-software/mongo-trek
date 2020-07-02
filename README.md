@@ -1,15 +1,14 @@
 ![mongo-trek](https://raw.githubusercontent.com/ozwolf-software/mongo-trek/master/misc/mongotrek-logo.png)
 
 [![Status](https://img.shields.io/badge/status-active-brightgreen.svg?style=flat-square)](https://img.shields.io/badge/status-active-brightgreen.svg)
-[![Travis](https://img.shields.io/travis/ozwolf-software/mongo-trek.svg?style=flat-square)](https://travis-ci.org/ozwolf-software/mongo-trek)
 [![Maven Central](https://img.shields.io/maven-central/v/net.ozwolf/mongo-trek.svg?style=flat-square)](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22net.ozwolf%22%20AND%20a%3A%22mongo-trek%22)
 [![Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=flat-square)](LICENSE)
 
-**mongoTrek** is a a Java library inspired by [Liquibase](http://www.liquibase.org/) for managing collection and document migrations within your application's database.
+**mongoTrek** is a Java library inspired by [Liquibase](http://www.liquibase.org/) for managing collection and document migrations within your application's database.
 
-This library is a "roll-forward" migration tool, meaning that to rollback changes, new migrations are required to undertake this task.
+This library is a "roll-forward" migration tool, meaning to rollback changes, new migrations are required to undertake this task.
 
-**Note**: As of version `2.0.0` mongoTrek only supports MongoDB version `3.4` and later.
+**Note**: As of version `5.0.0` mongoTrek has switched it's backing driver to the `org.mongodb:mongodb-driver-sync` library.  Support for `org.mongodb:mongodb-driver-legacy` and `org.mongodb:mongo-java-driver` will be maintained under version `4.x` of the library until such time as Mongo stops releasing legacy library versions. 
 
 ## Java Mongo Migrations Upgrade
 
@@ -23,14 +22,14 @@ mongoTrek is a fork from the [Java Mongo Migrations](https://github.com/ozwolf-s
 <dependency>
     <groupId>net.ozwolf</groupId>
     <artifactId>mongo-trek</artifactId>
-    <version>4.0.2</version>
+    <version>5.0.0</version>
 </dependency>
 ```
 
 ### Gradle
 
 ```gradle
-compile 'net.ozwolf:mongo-trek:4.0.2'
+compile 'net.ozwolf:mongo-trek:5.0.0'
 ```
 
 ### Provided Dependencies
@@ -39,15 +38,15 @@ As part of your own project, you will need to include the following dependencies
 
 #### Mongo Java Driver
 
-This library was tested against the `3.8.0` MongoDB library version.  If you require support for `3.4.3`, refer to the `2.0.1` version of the library. 
+This library was tested against the `4.0.4` MongoDB sync driver library version.  If you require support for the `mongodb-driver-legacy` or `mongo-java-driver` libraries, refer to the `4.x` versions of the library. 
 
-Build Version: `3.8.0`
+Build Version: `4.0.4`
 
 ```xml
 <dependency>
     <groupId>org.mongodb</groupId>
-    <artifactId>mongo-java-driver</artifactId>
-    <version>[3.4.3,)</version>
+    <artifactId>mongodb-driver-sync</artifactId>
+    <version>[4.0.4,5)</version>
 </dependency>
 ```
 
