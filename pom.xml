@@ -29,7 +29,7 @@
         <commons.io.version>2.7</commons.io.version>
         <maven.artifact.version>3.6.3</maven.artifact.version>
         <jackson.version>2.11.0</jackson.version>
-        <mongo.version>4.0.4</mongo.version>
+        <mongo.version>4.0.6</mongo.version>
         <slf4j.version>1.7.30</slf4j.version>
 
         <!-- Testing Libraries -->
