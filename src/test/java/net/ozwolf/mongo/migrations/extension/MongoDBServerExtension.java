@@ -4,19 +4,13 @@ import com.mongodb.ConnectionString;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
-import de.flapdoodle.embed.mongo.Command;
-import de.flapdoodle.embed.mongo.MongodExecutable;
-import de.flapdoodle.embed.mongo.MongodProcess;
-import de.flapdoodle.embed.mongo.MongodStarter;
-import de.flapdoodle.embed.mongo.config.IMongodConfig;
-import de.flapdoodle.embed.mongo.config.MongodConfigBuilder;
-import de.flapdoodle.embed.mongo.config.Net;
-import de.flapdoodle.embed.mongo.config.RuntimeConfigBuilder;
 import de.flapdoodle.embed.mongo.distribution.Version;
-import de.flapdoodle.embed.process.config.IRuntimeConfig;
-import de.flapdoodle.embed.process.config.io.ProcessOutput;
-import de.flapdoodle.embed.process.io.Processors;
-import de.flapdoodle.embed.process.runtime.Network;
+import de.flapdoodle.embed.mongo.transitions.Mongod;
+import de.flapdoodle.embed.mongo.transitions.RunningMongodProcess;
+import de.flapdoodle.embed.process.io.ProcessOutput;
+import de.flapdoodle.reverse.Transition;
+import de.flapdoodle.reverse.TransitionWalker;
+import de.flapdoodle.reverse.transitions.Start;
 import org.junit.jupiter.api.extension.*;
 
 import java.io.IOException;
@@ -24,17 +18,10 @@ import java.net.ServerSocket;
 import java.util.function.Consumer;
 
 public class MongoDBServerExtension implements BeforeAllCallback, AfterAllCallback, BeforeEachCallback, AfterEachCallback {
-    private MongodExecutable executable;
-    private MongodProcess process;
+    private TransitionWalker.ReachedState<RunningMongodProcess> process;
     private MongoClient client;
 
-    private final Integer port;
-
     public final static String SCHEMA_NAME = "mongo_trek_test";
-
-    public MongoDBServerExtension() {
-        this.port = getAvailablePort();
-    }
 
     public MongoDatabase getDatabase() {
         return client.getDatabase(SCHEMA_NAME);
@@ -42,46 +29,37 @@ public class MongoDBServerExtension implements BeforeAllCallback, AfterAllCallba
 
     @Override
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
-        IRuntimeConfig runtimeConfig = new RuntimeConfigBuilder()
-                .defaults(Command.MongoD)
-                .processOutput(new ProcessOutput(Processors.silent(), Processors.silent(), Processors.silent()))
-                .build();
+        this.process = new Mongod(){
+            @Override
+            public Transition<ProcessOutput> processOutput() {
+                return Start.to(ProcessOutput.class).initializedWith(ProcessOutput.silent());
+            }
+        }.start(Version.Main.V6_0);
 
-        MongodStarter starter = MongodStarter.getInstance(runtimeConfig);
 
-        IMongodConfig config = new MongodConfigBuilder()
-                .version(Version.Main.V3_4)
-                .net(new Net("localhost", port, Network.localhostIsIPv6()))
-                .build();
-
-        executable = starter.prepare(config);
-        process = executable.start();
-
-        ConnectionString uri = new ConnectionString("mongodb://localhost:" + port + "/" + SCHEMA_NAME);
+        ConnectionString uri = new ConnectionString("mongodb://localhost:" + this.process.current().getServerAddress().getPort() + "/" + SCHEMA_NAME);
         client = MongoClients.create(uri);
     }
 
     @Override
     public void afterAll(ExtensionContext extensionContext) throws Exception {
         if (client != null) client.close();
-        if (process != null) process.stop();
-        if (executable != null) executable.stop();
+        if (process != null) process.close();
 
         client = null;
         process = null;
-        executable = null;
     }
 
     @Override
     public void beforeEach(ExtensionContext extensionContext) throws Exception {
         MongoDatabase database = client.getDatabase(SCHEMA_NAME);
-        database.listCollectionNames().forEach((Consumer<String>) c -> database.getCollection(c).drop());
+        database.listCollectionNames().forEach(c -> database.getCollection(c).drop());
     }
 
     @Override
     public void afterEach(ExtensionContext extensionContext) throws Exception {
         MongoDatabase database = client.getDatabase(SCHEMA_NAME);
-        database.listCollectionNames().forEach((Consumer<String>) c -> database.getCollection(c).drop());
+        database.listCollectionNames().forEach(c -> database.getCollection(c).drop());
     }
 
     private static int getAvailablePort() {

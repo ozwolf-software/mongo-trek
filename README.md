@@ -8,11 +8,19 @@
 
 This library is a "roll-forward" migration tool, meaning to rollback changes, new migrations are required to undertake this task.
 
-**Note**: As of version `5.0.0` mongoTrek has switched it's backing driver to the `org.mongodb:mongodb-driver-sync` library.  Support for `org.mongodb:mongodb-driver-legacy` and `org.mongodb:mongo-java-driver` will be maintained under version `4.x` of the library until such time as Mongo stops releasing legacy library versions. 
+## Compatibility
+
+| Version | MongoDB                                                           | Java | Java Mongo Migrations Support |
+|---------|-------------------------------------------------------------------|------|-------------------------------|
+| <= 4.x  | `mongo-java-driver:[3.0,)` <br/>`mongodb-driver-legacy:[4.0,5.0)` | 1.8  | YES                           |
+| 5.0.0   | `mongodb-driver-sync:[4.0,)`                                      | 1.8  | YES                           |
+| 6.0.0+  | `mongodb-driver-sync:[4.0,)`                                      | 11   | NO                            |   
 
 ## Java Mongo Migrations Upgrade
 
 mongoTrek is a fork from the [Java Mongo Migrations](https://github.com/ozwolf-software/java-mongo-migrations) project.  As such, projects that have previously managed migrations using this project can upgrade to mongoTrek and it will understand the previous migrations schema version collection documents.
+
+**Note:** No guarantees provided for this upgrade support from version 6.0.0 or later.
 
 ## Dependency
 
@@ -22,14 +30,14 @@ mongoTrek is a fork from the [Java Mongo Migrations](https://github.com/ozwolf-s
 <dependency>
     <groupId>net.ozwolf</groupId>
     <artifactId>mongo-trek</artifactId>
-    <version>5.0.0</version>
+    <version>6.0.0</version>
 </dependency>
 ```
 
 ### Gradle
 
 ```gradle
-compile 'net.ozwolf:mongo-trek:5.0.0'
+compile 'net.ozwolf:mongo-trek:6.0.0'
 ```
 
 ### Provided Dependencies
@@ -38,21 +46,19 @@ As part of your own project, you will need to include the following dependencies
 
 #### Mongo Java Driver
 
-This library was tested against the `4.0.4` MongoDB sync driver library version.  If you require support for the `mongodb-driver-legacy` or `mongo-java-driver` libraries, refer to the `4.x` versions of the library. 
-
-Build Version: `4.0.4`
+This library was tested against the `4.8.2` MongoDB sync driver library version.  If you require support for the `mongodb-driver-legacy` or `mongo-java-driver` libraries, refer to the `4.x` versions of the library.
 
 ```xml
 <dependency>
     <groupId>org.mongodb</groupId>
     <artifactId>mongodb-driver-sync</artifactId>
-    <version>[4.0.4,5)</version>
+    <version>[4.8.2.4,5)</version>
 </dependency>
 ```
 
 #### Slf4j Implementation
 
-This library is tested against the Logback Classic library at version `1.2.3` 
+This library is tested against the Logback Classic library at version `1.7.30` 
 
 ## MongoDB Database Commands
 

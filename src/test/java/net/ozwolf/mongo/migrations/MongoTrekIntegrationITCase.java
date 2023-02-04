@@ -112,7 +112,7 @@ class MongoTrekIntegrationITCase {
                 fail(String.format("Expected exception of [ %s ], but got [ %s ]", MongoTrekFailureException.class.getSimpleName(), e.getClass().getSimpleName()));
 
             assertThat(e.getCause()).isInstanceOf(MongoCommandException.class);
-            assertThat(e.getMessage()).contains("mongoTrek failed: Command failed with error 59 (CommandNotFound): 'no such command: 'rubbish', bad cmd: '{ rubbish: \"this should be unrecognised\" }''");
+            assertThat(e.getMessage()).contains("mongoTrek failed: Command failed with error 59 (CommandNotFound): 'no such command: 'rubbish'");
 
             validateMigrations(
                     migrationOf("1.0.0", MigrationStatus.Successful, new Document("n", 1)),

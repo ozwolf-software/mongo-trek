@@ -108,7 +108,7 @@ public class MongoTrekState {
         /**
          * The next migration version to be applied
          *
-         * @return the next pending migration version or ```N/A``` if none to be applied
+         * @return the next pending migration version or {@code N/A} if none to be applied
          */
         public String getNextPendingVersion() {
             return migrations.stream().min(Migration.sortByVersionAscending()).map(Migration::getVersion).orElse("N/A");
@@ -117,7 +117,7 @@ public class MongoTrekState {
         /**
          * The last migration version to be applied
          *
-         * @return the next pending migration version or ```N/A``` if none to be applied
+         * @return the next pending migration version or {@code N/A} if none to be applied
          */
         public String getLastPendingVersion() {
             return migrations.stream().min(Migration.sortByVersionDescending()).map(Migration::getVersion).orElse("N/A");

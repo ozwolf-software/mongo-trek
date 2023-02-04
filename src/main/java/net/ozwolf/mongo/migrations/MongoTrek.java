@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * <h1>Mongo Trek</h1>
  *
- * The mongoTrek main class allows an application to provide it's own `MongoDatabase` instance or MongoDB Connection string to then apply migrations to or report on the migration status of their database schema.
+ * The mongoTrek main class allows an application to provide it's own {@code MongoDatabase} instance or MongoDB Connection string to then apply migrations to or report on the migration status of their database schema.
  */
 @SuppressWarnings({"WeakerAccess", "unused"})
 public class MongoTrek {
@@ -48,7 +48,7 @@ public class MongoTrek {
      *
      * @param migrationsFile The YAML or JSON file containing your MongoDB migrations.
      * @param uri            The Mongo instance connection string
-     * @see [MongoDB Connection String](https://docs.mongodb.com/manual/reference/connection-string/)
+     * @see <a href="https://docs.mongodb.com/manual/reference/connection-string/">MongoDB Connection String</a>
      */
     public MongoTrek(String migrationsFile, String uri) {
         this.migrationsFile = migrationsFile;
@@ -63,10 +63,10 @@ public class MongoTrek {
     }
 
     /**
-     * Create a new MongoTrek instance using a provided `MongoDatabase` instance.  MongoTrek will not close this connection.
+     * Create a new MongoTrek instance using a provided {@code MongoDatabase} instance.  MongoTrek will not close this connection.
      *
      * @param migrationsFile The YAML or JSON file containing your MongoDB migrations.
-     * @param database       The `MongoDatabase` instance.
+     * @param database       The {@code MongoDatabase} instance.
      */
     public MongoTrek(String migrationsFile, MongoDatabase database) {
         this.migrationsFile = migrationsFile;
@@ -77,7 +77,7 @@ public class MongoTrek {
     }
 
     /**
-     * Change the schema version collection from the default `_schema_version`
+     * Change the schema version collection from the default {@code _schema_version}
      *
      * @param collectionName The schema version collection name
      */
@@ -180,7 +180,7 @@ public class MongoTrek {
     /**
      * Set the class loader for mongoTrek to use when loading migrations files from resource paths.
      *
-     * By default, mongoTrek uses the class loader from `MongoTrek.class.getClassLoader()`, but sometimes this class loader is not relevant.
+     * By default, mongoTrek uses the class loader from {@code MongoTrek.class.getClassLoader()}, but sometimes this class loader is not relevant.
      *
      * @param classLoader the class loader for mongoTrek to use when loading resources
      */

@@ -1,8 +1,8 @@
 package net.ozwolf.mongo.migrations.internal.domain;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.bson.Document;
+import org.semver4j.Semver;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -51,8 +51,8 @@ public class Migration {
         return version;
     }
 
-    public ComparableVersion getComparableVersion() {
-        return new ComparableVersion(version);
+    public Semver getSemanticVersion() {
+        return Semver.parse(version);
     }
 
     public String getDescription() {
@@ -157,10 +157,10 @@ public class Migration {
     }
 
     public static Comparator<Migration> sortByVersionAscending() {
-        return Comparator.comparing(Migration::getComparableVersion);
+        return Comparator.comparing(Migration::getSemanticVersion);
     }
 
     public static Comparator<Migration> sortByVersionDescending() {
-        return (m1, m2) -> m2.getComparableVersion().compareTo(m1.getComparableVersion());
+        return (m1, m2) -> m2.getSemanticVersion().compareTo(m1.getSemanticVersion());
     }
 }
